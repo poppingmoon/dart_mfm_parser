@@ -34,7 +34,7 @@ abstract class MfmNode {
 
   @override
   String toString() {
-    return "$type (props: ${(props?.entries.toString().replaceAll("\n", "\\n") ?? "")}, children: ${(children ?? "")})";
+    return "$type (props: ${props?.entries.toString().replaceAll("\n", "\\n") ?? ""}, children: ${children ?? ""})";
   }
 }
 
@@ -169,8 +169,9 @@ class MfmMention extends MfmInline {
 
   MfmMention(this.username, this.host, this.acct)
       : super(
-            type: "mention",
-            props: {"username": username, "host": host, "acct": acct});
+          type: "mention",
+          props: {"username": username, "host": host, "acct": acct},
+        );
 }
 
 /// Hashtag Node
@@ -202,8 +203,11 @@ class MfmURL extends MfmInline {
   final bool? brackets;
 
   MfmURL(this.value, this.brackets)
-      : super(type: "url", props: {
-          "url": value,
-          "brackets": brackets,
-        });
+      : super(
+          type: "url",
+          props: {
+            "url": value,
+            "brackets": brackets,
+          },
+        );
 }

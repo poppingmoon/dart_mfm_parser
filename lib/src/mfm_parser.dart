@@ -11,15 +11,18 @@ class MfmParser {
   /// if you want to limit elements nest, input [nestLimit]
   List<MfmNode> parse(String input, {int? nestLimit}) {
     final result = Language().fullParser.handler(
-        input,
-        0,
-        FullParserOpts(
+          input,
+          0,
+          FullParserOpts(
             nestLimit: nestLimit ?? 20,
             depth: 0,
             linkLabel: false,
-            trace: false)) as Success;
+            trace: false,
+          ),
+        );
+    assert(result is Success);
 
-    final res = mergeText(result.value);
+    final res = mergeText(result.value!);
     return res;
   }
 
@@ -27,14 +30,17 @@ class MfmParser {
   /// it will parse text or emoji.
   List<MfmNode> parseSimple(String input) {
     final result = Language().simpleParser.handler(
-        input,
-        0,
-        FullParserOpts(
+          input,
+          0,
+          FullParserOpts(
             nestLimit: 20,
             depth: 0,
             linkLabel: false,
-            trace: false)) as Success;
-    return mergeText(result.value);
+            trace: false,
+          ),
+        );
+    assert(result is Success);
+    return mergeText(result.value!);
   }
 }
 
@@ -44,9 +50,10 @@ class FullParserOpts {
   bool linkLabel;
   bool trace;
 
-  FullParserOpts(
-      {required this.nestLimit,
-      required this.depth,
-      required this.linkLabel,
-      required this.trace});
+  FullParserOpts({
+    required this.nestLimit,
+    required this.depth,
+    required this.linkLabel,
+    required this.trace,
+  });
 }

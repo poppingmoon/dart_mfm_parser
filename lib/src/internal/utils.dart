@@ -1,12 +1,12 @@
 import 'package:mfm_parser/src/node.dart';
 
-List<MfmNode> mergeText(List nodes) {
+List<MfmNode> mergeText(List<dynamic> nodes) {
   final List<MfmNode> dest = <MfmNode>[];
   final List<String> storedChars = <String>[];
 
   void generateText() {
     if (storedChars.isNotEmpty) {
-      dest.add(MfmText(storedChars.join("")));
+      dest.add(MfmText(storedChars.join()));
       storedChars.clear();
     }
   }
@@ -14,7 +14,7 @@ List<MfmNode> mergeText(List nodes) {
   for (final node in nodes) {
     if (node is String) {
       storedChars.add(node);
-    } else if (node is! List && node.type == "text") {
+    } else if (node is MfmNode && node.type == "text") {
       storedChars.add((node as MfmText).text);
     } else {
       generateText();
@@ -34,7 +34,7 @@ List<MfmNode> mergeText(List nodes) {
         if (str != "") {
           dest.add(MfmText(str));
         }
-      } else {
+      } else if (node is MfmNode) {
         dest.add(node);
       }
     }
