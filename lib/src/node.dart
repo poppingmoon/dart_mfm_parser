@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 
 /// Misskey Elements Base Node
-abstract class MfmNode {
+sealed class MfmNode {
   /// node type.
   final String type;
 
@@ -38,15 +38,15 @@ abstract class MfmNode {
   }
 }
 
-abstract class MfmSimpleNode extends MfmNode {
+sealed class MfmSimpleNode extends MfmNode {
   MfmSimpleNode({required super.type, super.props, super.children});
 }
 
-abstract class MfmBlock extends MfmNode {
+sealed class MfmBlock extends MfmNode {
   MfmBlock({required super.type, super.props, super.children});
 }
 
-abstract class MfmInline extends MfmSimpleNode {
+sealed class MfmInline extends MfmSimpleNode {
   MfmInline({required super.type, super.props, super.children});
 }
 
@@ -132,7 +132,7 @@ class MfmPlain extends MfmInline {
 /// `MfmFn(name: position, arg: {"x": "3"}, children: MfmText(something))`
 class MfmFn extends MfmInline {
   final String name;
-  final Map<String, dynamic> args;
+  final Map<String, String> args;
 
   MfmFn({required this.name, required this.args, super.children})
       : super(type: "fn", props: {"name": name, "args": args});

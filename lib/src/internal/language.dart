@@ -15,15 +15,17 @@ Parser<dynamic> seqOrText(List<Parser<dynamic>> parsers) {
       var latestIndex = index;
       for (var i = 0; i < parsers.length; i++) {
         final result = parsers[i].handler(input, latestIndex, state);
-        if (!result.success) {
-          if (latestIndex == index) {
-            return failure();
-          } else {
-            return success(latestIndex, input.slice(index, latestIndex));
-          }
+        switch (result) {
+          case Success(:final value, :final index):
+            accum.add(value);
+            latestIndex = index;
+          case Failure():
+            if (latestIndex == index) {
+              return failure();
+            } else {
+              return success(latestIndex, input.slice(index, latestIndex));
+            }
         }
-        accum.add(result.value);
-        latestIndex = result.index!;
       }
       return success(latestIndex, accum);
     },
@@ -171,15 +173,16 @@ class Language {
         return Parser<MfmQuote>(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
-            if (!result.success) {
+            if (result is! Success) {
               return failure();
             }
 
-            final contents = result.value;
-            final quoteIndex = result.index!;
+            final Success(
+              value: List<dynamic> contents,
+              index: quoteIndex,
+            ) = result;
 
-            if ((contents as List<dynamic>).length == 1 &&
-                (contents[0] as String).isEmpty) {
+            if (contents.length == 1 && (contents[0] as String).isEmpty) {
               return failure();
             }
 
@@ -187,13 +190,13 @@ class Language {
             final contentResult =
                 contentParser.handler(contents.join("\n"), 0, state);
 
-            if (!contentResult.success) {
+            if (contentResult is! Success<List<dynamic>>) {
               return failure();
             }
 
             return success(
               quoteIndex,
-              MfmQuote(children: mergeText(contentResult.value!)),
+              MfmQuote(children: mergeText(contentResult.value)),
             );
           },
         );
@@ -381,16 +384,17 @@ class Language {
         return Parser<MfmItalic>(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
-            if (!result.success) {
+            if (result is! Success) {
               return failure();
             }
             final beforeStr = input.slice(0, index);
             if (RegExp(r"[a-zA-Z0-9]$").hasMatch(beforeStr)) {
               return failure();
             }
+            final Success(:List<String> value, index: resultIndex) = result;
             return success(
-              result.index!,
-              MfmItalic([MfmText((result.value! as List<String>).join())]),
+              resultIndex,
+              MfmItalic([MfmText(value.join())]),
             );
           },
         );
@@ -409,16 +413,17 @@ class Language {
         return Parser<MfmItalic>(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
-            if (!result.success) {
+            if (result is! Success) {
               return failure();
             }
             final beforeStr = input.slice(0, index);
             if (RegExp(r"[a-zA-Z0-9]$").hasMatch(beforeStr)) {
               return failure();
             }
+            final Success(:List<String> value, index: resultIndex) = result;
             return success(
-              result.index!,
-              MfmItalic([MfmText((result.value! as List<String>).join())]),
+              resultIndex,
+              MfmItalic([MfmText(value.join())]),
             );
           },
         );
@@ -505,10 +510,10 @@ class Language {
           handler: (input, index, state) {
             final result =
                 regexp(RegExp("[a-zA-Z0-9_]+")).handler(input, index, state);
-            if (!result.success) {
+            if (result is! Success<String>) {
               return result;
             }
-            return success(result.index!, result.value!);
+            return success(result.index, result.value);
           },
         );
 
@@ -621,7 +626,7 @@ class Language {
         return Parser(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
-            if (!result.success) {
+            if (result is! Success) {
               return failure();
             }
 
@@ -629,9 +634,9 @@ class Language {
             if (RegExp(r"[a-zA-Z0-9]$").hasMatch(beforeStr)) return failure();
 
             var invalidMention = false;
-            final resultIndex = result.index!;
-            final username = (result.value! as List<dynamic>)[2] as String;
-            final hostname = (result.value! as List<dynamic>)[3] as String?;
+            final Success(:List<dynamic> value, index: resultIndex) = result;
+            final username = value[2] as String;
+            final hostname = value[3] as String?;
 
             var modifiedHost = hostname;
             if (hostname != null) {
@@ -732,7 +737,7 @@ class Language {
         return Parser(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
-            if (!result.success) {
+            if (result is! Success) {
               return failure();
             }
             // check before
@@ -740,13 +745,12 @@ class Language {
             if (RegExp(r"[a-zA-Z0-9]$").hasMatch(beforeStr)) {
               return failure();
             }
-            final resultIndex = result.index!;
-            final resultValue = result.value! as String;
+            final Success(:String value, index: resultIndex) = result;
             // disallow number only
-            if (RegExp(r"^[0-9]+$").hasMatch(resultValue)) {
+            if (RegExp(r"^[0-9]+$").hasMatch(value)) {
               return failure();
             }
-            return success(resultIndex, MfmHashTag(resultValue));
+            return success(resultIndex, MfmHashTag(value));
           },
         );
       },
@@ -811,13 +815,16 @@ class Language {
         return Parser(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
-            if (!result.success) {
+            if (result is! Success) {
               return failure();
             }
-            final resultIndex = result.index;
-            var modifiedIndex = resultIndex!;
-            final schema = (result.value! as List<dynamic>)[1] as String;
-            var content = (result.value! as List<dynamic>)[2] as String;
+            final Success(
+              :List<dynamic> value,
+              index: resultIndex,
+            ) = result;
+            var modifiedIndex = resultIndex;
+            final schema = value[1] as String;
+            var content = value[2] as String;
             // remove the ".," at the right end
             final regexpResult = RegExp(r"[.,]+$").firstMatch(content);
             if (regexpResult != null) {
@@ -850,18 +857,18 @@ class Language {
         return Parser<MfmURL>(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
-            if (!result.success) {
+            if (result is! Success<String>) {
               return failure();
             }
-            final text = result.value!.slice(1, result.value!.length - 1);
-            return success(result.index!, MfmURL(text, true));
+            final text = result.value.slice(1, result.value.length - 1);
+            return success(result.index, MfmURL(text, true));
           },
         );
       },
       "search": () {
         final button = alt([
-          regexp(RegExp(r"\[(検索|[sS][eE][aA][rR][cC][hH])\]")),
-          regexp(RegExp("(検索|[sS][eE][aA][rR][cC][hH])")),
+          regexp(RegExp(r"\[(検索|search)\]", caseSensitive: false)),
+          regexp(RegExp("(検索|search)", caseSensitive: false)),
         ]);
 
         return seq([

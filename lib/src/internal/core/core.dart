@@ -1,25 +1,19 @@
 import 'package:mfm_parser/src/internal/extension/string_extension.dart';
 import 'package:mfm_parser/src/mfm_parser.dart';
 
-class Success<T> extends Result<T> {
+class Success<T> implements Result<T> {
   const Success({
-    required super.value,
-    required super.index,
-    super.success = true,
+    required this.value,
+    required this.index,
   });
+
+  final T value;
+  final int index;
 }
 
-class Failure<T> extends Result<T> {
-  const Failure({super.success = false});
-}
+class Failure<T> implements Result<T> {}
 
-abstract class Result<T> {
-  final bool success;
-  final T? value;
-  final int? index;
-
-  const Result({required this.success, this.value, this.index});
-}
+sealed class Result<T> {}
 
 typedef ParserHandler<T> = Result<T> Function(
   String input,
@@ -42,14 +36,15 @@ class Parser<T> {
         // ignore: avoid_print
         print("${pos.padRight(6)}enter $name");
         final result = handler(input, index, state);
-        if (result.success) {
-          final pos = "$index:${result.index}";
-          // ignore: avoid_print
-          print("${pos.padRight(6)}match $name");
-        } else {
-          final pos = "$index";
-          // ignore: avoid_print
-          print("${pos.padRight(6)}fail $name");
+        switch (result) {
+          case Success():
+            final pos = "$index:${result.index}";
+            // ignore: avoid_print
+            print("${pos.padRight(6)}match $name");
+          case Failure():
+            final pos = "$index";
+            // ignore: avoid_print
+            print("${pos.padRight(6)}fail $name");
         }
         return result;
       }
@@ -61,14 +56,10 @@ class Parser<T> {
     return Parser<U>(
       handler: (input, index, state) {
         final result = handler(input, index, state);
-        if (!result.success) {
-          if (result is! Failure<U>) {
-            return failure<U>();
-          }
-
-          return result as Result<U>;
-        }
-        return success(result.index!, fn(result.value as T));
+        return switch (result) {
+          Success(:final value, :final index) => success(index, fn(value)),
+          Failure() => failure()
+        };
       },
     );
   }
@@ -77,15 +68,11 @@ class Parser<T> {
     return Parser(
       handler: (input, index, state) {
         final result = handler(input, index, state);
-        if (!result.success) {
-          if (result is! Result<String>) {
-            return failure();
-          }
-          return result as Result<String>;
-        }
-        final succeed = result as Success;
-        final text = input.substring(index, result.index);
-        return success(succeed.index!, text);
+        return switch (result) {
+          Success(index: final resultIndex) =>
+            success(resultIndex, input.substring(index, resultIndex)),
+          Failure() => failure(),
+        };
       },
     );
   }
@@ -94,17 +81,17 @@ class Parser<T> {
     return Parser(
       handler: (input, index, state) {
         var latestIndex = index;
-        final List<T> accum = [];
+        final accum = <T>[];
         while (latestIndex < input.length) {
           final result = handler(input, latestIndex, state);
-          if (!result.success) {
+          if (result is! Success<T>) {
             break;
           }
-          latestIndex = result.index!;
-          accum.add(result.value as T);
+          latestIndex = result.index;
+          accum.add(result.value);
         }
         if (accum.length < min) {
-          return failure<List<T>>();
+          return failure();
         }
         return success(latestIndex, accum);
       },
@@ -157,7 +144,10 @@ Parser<String> str(String value) {
 }
 
 Parser<String> regexp<T extends RegExp>(T pattern) {
-  final re = RegExp('^(?:${pattern.pattern})');
+  final re = RegExp(
+    '^(?:${pattern.pattern})',
+    caseSensitive: pattern.isCaseSensitive,
+  );
 
   return Parser(
     handler: (input, index, _) {
@@ -180,11 +170,13 @@ Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
 
       for (var i = 0; i < parsers.length; i++) {
         final result = parsers[i].handler(input, latestIndex, state);
-        if (!result.success) {
-          return failure();
+        switch (result) {
+          case Success(:final value, :final index):
+            latestIndex = index;
+            accum.add(value);
+          case Failure():
+            return failure();
         }
-        latestIndex = result.index!;
-        accum.add(result.value);
       }
       return success(latestIndex, (select != null ? accum[select] : accum));
     },
@@ -196,7 +188,7 @@ Parser<T> alt<T>(List<Parser<T>> parsers) {
     handler: (input, index, state) {
       for (var i = 0; i < parsers.length; i++) {
         final result = parsers[i].handler(input, index, state);
-        if (result.success) {
+        if (result is Success) {
           return result;
         }
       }
@@ -217,7 +209,11 @@ Parser<void> notMatch(Parser<dynamic> parser) {
   return Parser(
     handler: (input, index, state) {
       final result = parser.handler(input, index, state);
-      return !result.success ? success(index, null) : failure();
+      if (result is Failure) {
+        return success(index, null);
+      } else {
+        return failure();
+      }
     },
   );
 }
@@ -241,10 +237,10 @@ final lineBegin = Parser<void>(
     if (index == 0) {
       return success(index, null);
     }
-    if (cr.handler(input, index - 1, state).success) {
+    if (cr.handler(input, index - 1, state) is Success) {
       return success(index, null);
     }
-    if (lf.handler(input, index - 1, state).success) {
+    if (lf.handler(input, index - 1, state) is Success) {
       return success(index, null);
     }
     return failure();
@@ -256,10 +252,10 @@ final lineEnd = Parser<void>(
     if (index == input.length) {
       return success(index, null);
     }
-    if (cr.handler(input, index, state).success) {
+    if (cr.handler(input, index, state) is Success) {
       return success(index, null);
     }
-    if (lf.handler(input, index, state).success) {
+    if (lf.handler(input, index, state) is Success) {
       return success(index, null);
     }
     return failure();

@@ -19,11 +19,9 @@ class MfmParser {
             linkLabel: false,
             trace: false,
           ),
-        );
-    assert(result is Success);
+        ) as Success<List<dynamic>>;
 
-    final res = mergeText(result.value!);
-    return res;
+    return mergeText(result.value);
   }
 
   /// parse limited syntax.
@@ -38,9 +36,9 @@ class MfmParser {
             linkLabel: false,
             trace: false,
           ),
-        );
-    assert(result is Success);
-    return mergeText(result.value!);
+        ) as Success<List<dynamic>>;
+
+    return mergeText(result.value);
   }
 }
 
