@@ -11,13 +11,13 @@ $[x2 1. Feature]
 3. custom emoji, such as custom emoji :something_emoji: and 🚀🚀🚀
 
   """;
-  final List<MfmNode> parsed = const MfmParser().parse(input);
+  final List<MfmNode> parsed = parse(input);
 
   // ignore: avoid_print
   print(parsed);
 
   const userName = "🎂:ai_yay: momoi :ai_yay_fast:🎂@C100 Z-999";
-  final List<MfmNode> parsedUserName = const MfmParser().parseSimple(userName);
+  final List<MfmNode> parsedUserName = parseSimple(userName);
 
   // ignore: avoid_print
   print(parsedUserName);

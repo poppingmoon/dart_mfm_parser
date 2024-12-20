@@ -59,6 +59,8 @@ Parser<dynamic> nest(Parser<dynamic> parser, {Parser<dynamic>? fallback}) {
   );
 }
 
+final language = Language();
+
 class Language {
   late final Map<String, Parser<dynamic>> _l;
   Parser<List<dynamic>> get fullParser => _l["full"]!.many(0);

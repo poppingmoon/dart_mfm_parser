@@ -1,22 +1,22 @@
-import 'package:mfm_parser/src/mfm_parser.dart';
-import 'package:mfm_parser/src/node.dart';
+import 'package:mfm_parser/mfm_parser.dart' hide parse;
+import 'package:mfm_parser/mfm_parser.dart' as mfm_parser;
 import 'package:test/test.dart';
 
 void main() {
-  final parse = const MfmParser().parse;
+  const parse = mfm_parser.parse;
 
   group("SimpleParser", () {
     group("text", () {
       test("basic", () {
         const input = "abc";
         final output = [const MfmText(text: "abc")];
-        expect(const MfmParser().parseSimple(input), orderedEquals(output));
+        expect(mfm_parser.parseSimple(input), orderedEquals(output));
       });
 
       test("ignore hashtag", () {
         const input = "abc#abc";
         final output = [const MfmText(text: "abc#abc")];
-        expect(const MfmParser().parseSimple(input), orderedEquals(output));
+        expect(mfm_parser.parseSimple(input), orderedEquals(output));
       });
 
       test("keycap number sign", () {
@@ -27,7 +27,7 @@ void main() {
           const MfmText(text: "abc"),
         ];
 
-        expect(const MfmParser().parseSimple(input), orderedEquals(output));
+        expect(mfm_parser.parseSimple(input), orderedEquals(output));
       });
     });
 
@@ -35,19 +35,19 @@ void main() {
       test("basic", () {
         const input = ":foo:";
         final output = [const MfmEmojiCode(name: "foo")];
-        expect(const MfmParser().parseSimple(input), orderedEquals(output));
+        expect(mfm_parser.parseSimple(input), orderedEquals(output));
       });
 
       test("between texts", () {
         const input = "foo:bar:baz";
         final output = [const MfmText(text: "foo:bar:baz")];
-        expect(const MfmParser().parseSimple(input), orderedEquals(output));
+        expect(mfm_parser.parseSimple(input), orderedEquals(output));
       });
 
       test("between text 2", () {
         const input = "12:34:56";
         final output = [const MfmText(text: "12:34:56")];
-        expect(const MfmParser().parseSimple(input), orderedEquals(output));
+        expect(mfm_parser.parseSimple(input), orderedEquals(output));
       });
 
       test("between text 3", () {
@@ -57,20 +57,20 @@ void main() {
           const MfmEmojiCode(name: "bar"),
           const MfmText(text: "い"),
         ];
-        expect(const MfmParser().parseSimple(input), orderedEquals(output));
+        expect(mfm_parser.parseSimple(input), orderedEquals(output));
       });
 
       test("should not parse emojis inside <plain>", () {
         const input = "<plain>:foo:</plain>";
         final output = [MfmPlain(text: ":foo:")];
-        expect(const MfmParser().parseSimple(input), orderedEquals(output));
+        expect(mfm_parser.parseSimple(input), orderedEquals(output));
       });
     });
 
     test("disallow other syntaxes", () {
       const input = "foo **bar** baz";
       final output = [const MfmText(text: "foo **bar** baz")];
-      expect(const MfmParser().parseSimple(input), orderedEquals(output));
+      expect(mfm_parser.parseSimple(input), orderedEquals(output));
     });
   });
 
