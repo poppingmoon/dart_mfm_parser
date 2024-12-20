@@ -6,7 +6,7 @@ List<MfmNode> mergeText(List<dynamic> nodes) {
 
   void generateText() {
     if (storedChars.isNotEmpty) {
-      dest.add(MfmText(storedChars.join()));
+      dest.add(MfmText(text: storedChars.join()));
       storedChars.clear();
     }
   }
@@ -14,8 +14,8 @@ List<MfmNode> mergeText(List<dynamic> nodes) {
   for (final node in nodes) {
     if (node is String) {
       storedChars.add(node);
-    } else if (node is MfmNode && node.type == "text") {
-      storedChars.add((node as MfmText).text);
+    } else if (node is MfmText) {
+      storedChars.add(node.text);
     } else {
       generateText();
       if (node is List) {
@@ -25,14 +25,14 @@ List<MfmNode> mergeText(List<dynamic> nodes) {
             str += nodeElement;
           } else if (nodeElement is MfmNode) {
             if (str.isNotEmpty) {
-              dest.add(MfmText(str));
+              dest.add(MfmText(text: str));
             }
             str = "";
             dest.add(nodeElement);
           }
         }
         if (str != "") {
-          dest.add(MfmText(str));
+          dest.add(MfmText(text: str));
         }
       } else if (node is MfmNode) {
         dest.add(node);

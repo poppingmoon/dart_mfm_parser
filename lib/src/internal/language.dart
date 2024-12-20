@@ -225,7 +225,10 @@ class Language {
               ((result as List<dynamic>)[3] as List<dynamic>).join().trim();
           final code = (result[5] as List<dynamic>).join();
 
-          return MfmCodeBlock(code, lang.isNotEmpty ? lang : null);
+          return MfmCodeBlock(
+            code: code,
+            lang: lang.isNotEmpty ? lang : null,
+          );
         });
       },
       "mathBlock": () {
@@ -251,7 +254,9 @@ class Language {
             newLine.option(),
           ],
           select: 4,
-        ).map((result) => MfmMathBlock((result as List<dynamic>).join()));
+        ).map(
+          (result) => MfmMathBlock(formula: (result as List<dynamic>).join()),
+        );
       },
       "centerTag": () {
         final open = str("<center>");
@@ -309,7 +314,7 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmBold(
-            mergeText((result as List<dynamic>)[1] as List<dynamic>)
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
                 .cast<MfmInline>(),
           );
         });
@@ -325,7 +330,7 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmBold(
-            mergeText((result as List<dynamic>)[1] as List<dynamic>)
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
                 .cast<MfmInline>(),
           );
         });
@@ -339,7 +344,11 @@ class Language {
             mark,
           ],
           select: 1,
-        ).map((result) => MfmBold([MfmText((result as List<String>).join())]));
+        ).map(
+          (result) => MfmBold(
+            children: [MfmText(text: (result as List<String>).join())],
+          ),
+        );
       },
       "smallTag": () {
         final open = str("<small>");
@@ -351,7 +360,7 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmSmall(
-            mergeText((result as List<dynamic>)[1] as List<dynamic>)
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
                 .cast<MfmInline>(),
           );
         });
@@ -366,7 +375,7 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmItalic(
-            mergeText((result as List<dynamic>)[1] as List<dynamic>)
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
                 .cast<MfmInline>(),
           );
         });
@@ -394,7 +403,7 @@ class Language {
             final Success(:List<String> value, index: resultIndex) = result;
             return success(
               resultIndex,
-              MfmItalic([MfmText(value.join())]),
+              MfmItalic(children: [MfmText(text: value.join())]),
             );
           },
         );
@@ -423,7 +432,7 @@ class Language {
             final Success(:List<String> value, index: resultIndex) = result;
             return success(
               resultIndex,
-              MfmItalic([MfmText(value.join())]),
+              MfmItalic(children: [MfmText(text: value.join())]),
             );
           },
         );
@@ -441,7 +450,7 @@ class Language {
             return result;
           }
           return MfmStrike(
-            mergeText((result as List<dynamic>)[1] as List<dynamic>)
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
                 .cast<MfmInline>(),
           );
         });
@@ -461,14 +470,14 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmStrike(
-            mergeText((result as List<dynamic>)[1] as List<dynamic>)
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
                 .cast<MfmInline>(),
           );
         });
       },
       "unicodeEmoji": () {
         return regexp(tweEmojiParser)
-            .map((content) => MfmUnicodeEmoji(content));
+            .map((content) => MfmUnicodeEmoji(emoji: content));
       },
       "emojiCode": () {
         final side = notMatch(regexp(RegExp("[a-zA-Z0-9]")));
@@ -482,7 +491,7 @@ class Language {
             alt([lineEnd, side]),
           ],
           select: 2,
-        ).map((name) => MfmEmojiCode(name as String));
+        ).map((name) => MfmEmojiCode(name: name as String));
       },
       "plainTag": () {
         final open = str("<plain>");
@@ -503,7 +512,7 @@ class Language {
             close,
           ],
           select: 2,
-        ).map((result) => MfmPlain(result as String));
+        ).map((result) => MfmPlain(text: result as String));
       },
       "fn": () {
         final fnName = Parser(
@@ -680,7 +689,11 @@ class Language {
                 : "@$modifiedName";
             return success(
               index + acct.length,
-              MfmMention(modifiedName, modifiedHost, acct),
+              MfmMention(
+                username: modifiedName,
+                host: modifiedHost,
+                acct: acct,
+              ),
             );
           },
         );
@@ -750,7 +763,7 @@ class Language {
             if (RegExp(r"^[0-9]+$").hasMatch(value)) {
               return failure();
             }
-            return success(resultIndex, MfmHashTag(value));
+            return success(resultIndex, MfmHashTag(hashTag: value));
           },
         );
       },
@@ -834,7 +847,13 @@ class Language {
                 return success(resultIndex, input.slice(index, resultIndex));
               }
             }
-            return success(modifiedIndex, MfmURL(schema + content, false));
+            return success(
+              modifiedIndex,
+              MfmURL(
+                value: "$schema$content",
+                brackets: false,
+              ),
+            );
           },
         );
       },
@@ -861,7 +880,13 @@ class Language {
               return failure();
             }
             final text = result.value.slice(1, result.value.length - 1);
-            return success(result.index, MfmURL(text, true));
+            return success(
+              result.index,
+              MfmURL(
+                value: text,
+                brackets: true,
+              ),
+            );
           },
         );
       },
@@ -892,7 +917,10 @@ class Language {
           newLine.option(),
         ]).map((result) {
           final query = ((result as List<dynamic>)[2] as List<dynamic>).join();
-          return MfmSearch(query, "$query${result[3]}${result[4]}");
+          return MfmSearch(
+            query: query,
+            content: "$query${result[3]}${result[4]}",
+          );
         });
       },
     });

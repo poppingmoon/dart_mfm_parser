@@ -9,19 +9,23 @@ void main() {
     group("text", () {
       test("basic", () {
         const input = "abc";
-        final output = [MfmText("abc")];
+        final output = [const MfmText(text: "abc")];
         expect(const MfmParser().parseSimple(input), orderedEquals(output));
       });
 
       test("ignore hashtag", () {
         const input = "abc#abc";
-        final output = [MfmText("abc#abc")];
+        final output = [const MfmText(text: "abc#abc")];
         expect(const MfmParser().parseSimple(input), orderedEquals(output));
       });
 
       test("keycap number sign", () {
         const input = "abc#️⃣abc";
-        final output = [MfmText("abc"), MfmUnicodeEmoji("#️⃣"), MfmText("abc")];
+        final output = [
+          const MfmText(text: "abc"),
+          const MfmUnicodeEmoji(emoji: "#️⃣"),
+          const MfmText(text: "abc"),
+        ];
 
         expect(const MfmParser().parseSimple(input), orderedEquals(output));
       });
@@ -30,38 +34,42 @@ void main() {
     group("emoji", () {
       test("basic", () {
         const input = ":foo:";
-        final output = [MfmEmojiCode("foo")];
+        final output = [const MfmEmojiCode(name: "foo")];
         expect(const MfmParser().parseSimple(input), orderedEquals(output));
       });
 
       test("between texts", () {
         const input = "foo:bar:baz";
-        final output = [MfmText("foo:bar:baz")];
+        final output = [const MfmText(text: "foo:bar:baz")];
         expect(const MfmParser().parseSimple(input), orderedEquals(output));
       });
 
       test("between text 2", () {
         const input = "12:34:56";
-        final output = [MfmText("12:34:56")];
+        final output = [const MfmText(text: "12:34:56")];
         expect(const MfmParser().parseSimple(input), orderedEquals(output));
       });
 
       test("between text 3", () {
         const input = "あ:bar:い";
-        final output = [MfmText("あ"), MfmEmojiCode("bar"), MfmText("い")];
+        final output = [
+          const MfmText(text: "あ"),
+          const MfmEmojiCode(name: "bar"),
+          const MfmText(text: "い"),
+        ];
         expect(const MfmParser().parseSimple(input), orderedEquals(output));
       });
 
       test("should not parse emojis inside <plain>", () {
         const input = "<plain>:foo:</plain>";
-        final output = [MfmPlain(":foo:")];
+        final output = [MfmPlain(text: ":foo:")];
         expect(const MfmParser().parseSimple(input), orderedEquals(output));
       });
     });
 
     test("disallow other syntaxes", () {
       const input = "foo **bar** baz";
-      final output = [MfmText("foo **bar** baz")];
+      final output = [const MfmText(text: "foo **bar** baz")];
       expect(const MfmParser().parseSimple(input), orderedEquals(output));
     });
   });
@@ -70,7 +78,7 @@ void main() {
     group("text", () {
       test("普通のテキストを入力すると1つのテキストノードが返される", () {
         const input = "abc";
-        final output = [MfmText("abc")];
+        final output = [const MfmText(text: "abc")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -79,7 +87,7 @@ void main() {
       test("1行の引用ブロックを使用できる", () {
         const input = "> abc";
         final output = [
-          MfmQuote(children: [MfmText("abc")]),
+          const MfmQuote(children: [MfmText(text: "abc")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -90,7 +98,7 @@ void main() {
 > 123
 """;
         final output = [
-          MfmQuote(children: [MfmText("abc\n123")]),
+          const MfmQuote(children: [MfmText(text: "abc\n123")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -102,9 +110,9 @@ void main() {
 > </center>
 """;
         final output = [
-          MfmQuote(
+          const MfmQuote(
             children: [
-              MfmCenter(children: [MfmText("a")]),
+              MfmCenter(children: [MfmText(text: "a")]),
             ],
           ),
         ];
@@ -118,13 +126,13 @@ void main() {
 > </center>
 """;
         final output = [
-          MfmQuote(
+          const MfmQuote(
             children: [
               MfmCenter(
                 children: [
-                  MfmText("I'm "),
-                  MfmMention("ai", null, "@ai"),
-                  MfmText(", An bot of misskey!"),
+                  MfmText(text: "I'm "),
+                  MfmMention(username: "ai", acct: "@ai"),
+                  MfmText(text: ", An bot of misskey!"),
                 ],
               ),
             ],
@@ -140,14 +148,14 @@ void main() {
 > 123
 """;
         final output = [
-          MfmQuote(children: [MfmText("abc\n\n123")]),
+          const MfmQuote(children: [MfmText(text: "abc\n\n123")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("1行の引用ブロックを空行にはできない", () {
         const input = "> ";
-        final output = [MfmText("> ")];
+        final output = [const MfmText(text: "> ")];
         expect(parse(input), orderedEquals(output));
       });
 
@@ -158,8 +166,8 @@ void main() {
 
 hoge""";
         final output = [
-          MfmQuote(children: [MfmText("foo\nbar")]),
-          MfmText("hoge"),
+          const MfmQuote(children: [MfmText(text: "foo\nbar")]),
+          const MfmText(text: "hoge"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -172,9 +180,9 @@ hoge""";
 
 hoge""";
         final output = [
-          MfmQuote(children: [MfmText("foo")]),
-          MfmQuote(children: [MfmText("bar")]),
-          MfmText("hoge"),
+          const MfmQuote(children: [MfmText(text: "foo")]),
+          const MfmQuote(children: [MfmText(text: "bar")]),
+          const MfmText(text: "hoge"),
         ];
 
         expect(parse(input), orderedEquals(output));
@@ -183,11 +191,11 @@ hoge""";
       test("引用中にハッシュタグがある場合", () {
         const input = "> before #abc after";
         final output = [
-          MfmQuote(
+          const MfmQuote(
             children: [
-              MfmText("before "),
-              MfmHashTag("abc"),
-              MfmText(" after"),
+              MfmText(text: "before "),
+              MfmHashTag(hashTag: "abc"),
+              MfmText(text: " after"),
             ],
           ),
         ];
@@ -200,32 +208,44 @@ hoge""";
       group("検索構文を使用できる", () {
         test("Search", () {
           const input = "MFM 書き方 123 Search";
-          final output = [MfmSearch("MFM 書き方 123", input)];
+          final output = [
+            const MfmSearch(query: "MFM 書き方 123", content: input),
+          ];
           expect(parse(input), output);
         });
         test("[Search]", () {
           const input = "MFM 書き方 123 [Search]";
-          final output = [MfmSearch("MFM 書き方 123", input)];
+          final output = [
+            const MfmSearch(query: "MFM 書き方 123", content: input),
+          ];
           expect(parse(input), output);
         });
         test("search", () {
           const input = "MFM 書き方 123 search";
-          final output = [MfmSearch("MFM 書き方 123", input)];
+          final output = [
+            const MfmSearch(query: "MFM 書き方 123", content: input),
+          ];
           expect(parse(input), output);
         });
         test("[search]", () {
           const input = "MFM 書き方 123 [search]";
-          final output = [MfmSearch("MFM 書き方 123", input)];
+          final output = [
+            const MfmSearch(query: "MFM 書き方 123", content: input),
+          ];
           expect(parse(input), output);
         });
         test("検索", () {
           const input = "MFM 書き方 123 検索";
-          final output = [MfmSearch("MFM 書き方 123", input)];
+          final output = [
+            const MfmSearch(query: "MFM 書き方 123", content: input),
+          ];
           expect(parse(input), output);
         });
         test("[検索]", () {
           const input = "MFM 書き方 123 [検索]";
-          final output = [MfmSearch("MFM 書き方 123", input)];
+          final output = [
+            const MfmSearch(query: "MFM 書き方 123", content: input),
+          ];
           expect(parse(input), output);
         });
       });
@@ -233,9 +253,12 @@ hoge""";
       test("ブロックの前後にあるテキストが正しく解釈される", () {
         const input = "abc\nhoge piyo bebeyo 検索\n123";
         final output = [
-          MfmText("abc"),
-          MfmSearch("hoge piyo bebeyo", "hoge piyo bebeyo 検索"),
-          MfmText("123"),
+          const MfmText(text: "abc"),
+          const MfmSearch(
+            query: "hoge piyo bebeyo",
+            content: "hoge piyo bebeyo 検索",
+          ),
+          const MfmText(text: "123"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -244,20 +267,20 @@ hoge""";
     group("code block", () {
       test("コードブロックを使用できる", () {
         const input = "```\nabc\n```";
-        final output = [MfmCodeBlock("abc", null)];
+        final output = [const MfmCodeBlock(code: "abc")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("コードブロックには複数行のコードを入力できる", () {
         const input = "```\na\nb\nc\n```";
-        final output = [MfmCodeBlock("a\nb\nc", null)];
+        final output = [const MfmCodeBlock(code: "a\nb\nc")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("コードブロックは言語を指定できる", () {
         const input = "```js\nconst a = 1;\n```";
         final output = [
-          MfmCodeBlock("const a = 1;", "js"),
+          const MfmCodeBlock(code: "const a = 1;", lang: "js"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -265,23 +288,26 @@ hoge""";
       test("ブロックの前後にあるテキストが正しく解釈される", () {
         const input = "abc\n```\nconst abc = 1;\n```\n123";
         final output = [
-          MfmText("abc"),
-          MfmCodeBlock("const abc = 1;", null),
-          MfmText("123"),
+          const MfmText(text: "abc"),
+          const MfmCodeBlock(code: "const abc = 1;"),
+          const MfmText(text: "123"),
         ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore internal marker", () {
         const input = "```\naaa```bbb\n```";
-        final output = [MfmCodeBlock("aaa```bbb", null)];
+        final output = [const MfmCodeBlock(code: "aaa```bbb")];
 
         expect(parse(input), orderedEquals(output));
       });
 
       test("trim after line break", () {
         const input = "```\nfoo\n```\nbar";
-        final output = [MfmCodeBlock("foo", null), MfmText("bar")];
+        final output = [
+          const MfmCodeBlock(code: "foo"),
+          const MfmText(text: "bar"),
+        ];
 
         expect(parse(input), orderedEquals(output));
       });
@@ -290,25 +316,29 @@ hoge""";
     group("mathBlock", () {
       test("1行の数式ブロックを使用できる", () {
         const input = r"\[math1\]";
-        final output = [MfmMathBlock("math1")];
+        final output = [const MfmMathBlock(formula: "math1")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ブロックの前後にあるテキストが正しく解釈される", () {
         const input = "abc\n\\[math1\\]\n123";
-        final output = [MfmText("abc"), MfmMathBlock("math1"), MfmText("123")];
+        final output = [
+          const MfmText(text: "abc"),
+          const MfmMathBlock(formula: "math1"),
+          const MfmText(text: "123"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("行末以外に閉じタグがある場合はマッチしない", () {
         const input = r"\[aaa\]after";
-        final output = [MfmText(r"\[aaa\]after")];
+        final output = [const MfmText(text: r"\[aaa\]after")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("行頭以外に開始タグがある場合はマッチしない", () {
         const input = r"before\[aaa\]";
-        final output = [MfmText(r"before\[aaa\]")];
+        final output = [const MfmText(text: r"before\[aaa\]")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -317,7 +347,7 @@ hoge""";
       test("single text", () {
         const input = "<center>abc</center>";
         final output = [
-          MfmCenter(children: [MfmText("abc")]),
+          const MfmCenter(children: [MfmText(text: "abc")]),
         ];
 
         expect(parse(input), orderedEquals(output));
@@ -326,9 +356,9 @@ hoge""";
       test("multiple text", () {
         const input = "before\n<center>\nabc\n123\npiyo\n</center>\nafter";
         final output = [
-          MfmText("before"),
-          MfmCenter(children: [MfmText("abc\n123\npiyo")]),
-          MfmText("after"),
+          const MfmText(text: "before"),
+          const MfmCenter(children: [MfmText(text: "abc\n123\npiyo")]),
+          const MfmText(text: "after"),
         ];
 
         expect(parse(input), orderedEquals(output));
@@ -338,7 +368,7 @@ hoge""";
     group("emoji code", () {
       test("basic", () {
         const input = ":abc:";
-        final output = [MfmEmojiCode("abc")];
+        final output = [const MfmEmojiCode(name: "abc")];
 
         expect(parse(input), orderedEquals(output));
       });
@@ -347,30 +377,37 @@ hoge""";
     group("unicode emoji", () {
       test("basic", () {
         const input = "今起きた😇";
-        final output = [MfmText("今起きた"), MfmUnicodeEmoji("😇")];
+        final output = [
+          const MfmText(text: "今起きた"),
+          const MfmUnicodeEmoji(emoji: "😇"),
+        ];
         expect(parse(input), output);
       });
 
       test("keycap number sign", () {
         const input = "abc#️⃣123";
-        final output = [MfmText("abc"), MfmUnicodeEmoji("#️⃣"), MfmText("123")];
+        final output = [
+          const MfmText(text: "abc"),
+          const MfmUnicodeEmoji(emoji: "#️⃣"),
+          const MfmText(text: "123"),
+        ];
         expect(parse(input), output);
       });
 
       test("Unicode 15.0", () {
         const input = "🫨🩷🫷🫎🪽🪻🫚🪭🪇🪯🛜";
         final output = [
-          MfmUnicodeEmoji("🫨"),
-          MfmUnicodeEmoji("🩷"),
-          MfmUnicodeEmoji("🫷"),
-          MfmUnicodeEmoji("🫎"),
-          MfmUnicodeEmoji("🪽"),
-          MfmUnicodeEmoji("🪻"),
-          MfmUnicodeEmoji("🫚"),
-          MfmUnicodeEmoji("🪭"),
-          MfmUnicodeEmoji("🪇"),
-          MfmUnicodeEmoji("🪯"),
-          MfmUnicodeEmoji("🛜"),
+          const MfmUnicodeEmoji(emoji: "🫨"),
+          const MfmUnicodeEmoji(emoji: "🩷"),
+          const MfmUnicodeEmoji(emoji: "🫷"),
+          const MfmUnicodeEmoji(emoji: "🫎"),
+          const MfmUnicodeEmoji(emoji: "🪽"),
+          const MfmUnicodeEmoji(emoji: "🪻"),
+          const MfmUnicodeEmoji(emoji: "🫚"),
+          const MfmUnicodeEmoji(emoji: "🪭"),
+          const MfmUnicodeEmoji(emoji: "🪇"),
+          const MfmUnicodeEmoji(emoji: "🪯"),
+          const MfmUnicodeEmoji(emoji: "🛜"),
         ];
         expect(parse(input), output);
       });
@@ -380,7 +417,7 @@ hoge""";
       test("basic", () {
         const input = "***abc***";
         final output = [
-          MfmFn(name: "tada", args: {}, children: [MfmText("abc")]),
+          const MfmFn(name: "tada", args: {}, children: [MfmText(text: "abc")]),
         ];
 
         expect(parse(input), orderedEquals(output));
@@ -389,13 +426,13 @@ hoge""";
       test("内容にはインライン構文を利用できる", () {
         const input = "***123**abc**123***";
         final output = [
-          MfmFn(
+          const MfmFn(
             name: "tada",
             args: {},
             children: [
-              MfmText("123"),
-              MfmBold([MfmText("abc")]),
-              MfmText("123"),
+              MfmText(text: "123"),
+              MfmBold(children: [MfmText(text: "abc")]),
+              MfmText(text: "123"),
             ],
           ),
         ];
@@ -405,13 +442,13 @@ hoge""";
       test("内容は改行できる", () {
         const input = "***123\n**abc**\n123***";
         final output = [
-          MfmFn(
+          const MfmFn(
             name: "tada",
             args: {},
             children: [
-              MfmText("123\n"),
-              MfmBold([MfmText("abc")]),
-              MfmText("\n123"),
+              MfmText(text: "123\n"),
+              MfmBold(children: [MfmText(text: "abc")]),
+              MfmText(text: "\n123"),
             ],
           ),
         ];
@@ -423,7 +460,7 @@ hoge""";
       test("basic", () {
         const input = "<b>abc</b>";
         final output = [
-          MfmBold([MfmText("abc")]),
+          const MfmBold(children: [MfmText(text: "abc")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -431,11 +468,13 @@ hoge""";
       test("inline syntax allowed inside", () {
         const input = "<b>123~~abc~~123</b>";
         final output = [
-          MfmBold([
-            MfmText("123"),
-            MfmStrike([MfmText("abc")]),
-            MfmText("123"),
-          ]),
+          const MfmBold(
+            children: [
+              MfmText(text: "123"),
+              MfmStrike(children: [MfmText(text: "abc")]),
+              MfmText(text: "123"),
+            ],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -443,11 +482,13 @@ hoge""";
       test("line breaks", () {
         const input = "<b>123\n~~abc~~\n123</b>";
         final output = [
-          MfmBold([
-            MfmText("123\n"),
-            MfmStrike([MfmText("abc")]),
-            MfmText("\n123"),
-          ]),
+          const MfmBold(
+            children: [
+              MfmText(text: "123\n"),
+              MfmStrike(children: [MfmText(text: "abc")]),
+              MfmText(text: "\n123"),
+            ],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -457,7 +498,7 @@ hoge""";
       test("basic", () {
         const input = "**abc**";
         final output = [
-          MfmBold([MfmText("abc")]),
+          const MfmBold(children: [MfmText(text: "abc")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -465,11 +506,13 @@ hoge""";
       test("内容にはインライン構文を利用できる", () {
         const input = "**123~~abc~~123**";
         final output = [
-          MfmBold([
-            MfmText("123"),
-            MfmStrike([MfmText("abc")]),
-            MfmText("123"),
-          ]),
+          const MfmBold(
+            children: [
+              MfmText(text: "123"),
+              MfmStrike(children: [MfmText(text: "abc")]),
+              MfmText(text: "123"),
+            ],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -477,11 +520,13 @@ hoge""";
       test("内容は改行できる", () {
         const input = "**123\n~~abc~~\n123**";
         final output = [
-          MfmBold([
-            MfmText("123\n"),
-            MfmStrike([MfmText("abc")]),
-            MfmText("\n123"),
-          ]),
+          const MfmBold(
+            children: [
+              MfmText(text: "123\n"),
+              MfmStrike(children: [MfmText(text: "abc")]),
+              MfmText(text: "\n123"),
+            ],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -492,7 +537,7 @@ hoge""";
         test("basic", () {
           const input = "__abc__";
           final output = [
-            MfmBold([MfmText("abc")]),
+            const MfmBold(children: [MfmText(text: "abc")]),
           ];
           expect(parse(input), orderedEquals(output));
         });
@@ -500,9 +545,9 @@ hoge""";
         test("basic 2", () {
           const input = "before __abc__ after";
           final output = [
-            MfmText("before "),
-            MfmBold([MfmText("abc")]),
-            MfmText(" after"),
+            const MfmText(text: "before "),
+            const MfmBold(children: [MfmText(text: "abc")]),
+            const MfmText(text: " after"),
           ];
           expect(parse(input), orderedEquals(output));
         });
@@ -510,9 +555,9 @@ hoge""";
         test("basic 3", () {
           const input = "before __a b c__ after";
           final output = [
-            MfmText("before "),
-            MfmBold([MfmText("a b c")]),
-            MfmText(" after"),
+            const MfmText(text: "before "),
+            const MfmBold(children: [MfmText(text: "a b c")]),
+            const MfmText(text: " after"),
           ];
           expect(parse(input), orderedEquals(output));
         });
@@ -523,7 +568,7 @@ hoge""";
       test("basic", () {
         const input = "<small>abc</small>";
         final output = [
-          MfmSmall([MfmText("abc")]),
+          const MfmSmall(children: [MfmText(text: "abc")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -531,11 +576,13 @@ hoge""";
       test("内容にはインライン構文を利用できる", () {
         const input = "<small>abc**123**abc</small>";
         final output = [
-          MfmSmall([
-            MfmText("abc"),
-            MfmBold([MfmText("123")]),
-            MfmText("abc"),
-          ]),
+          const MfmSmall(
+            children: [
+              MfmText(text: "abc"),
+              MfmBold(children: [MfmText(text: "123")]),
+              MfmText(text: "abc"),
+            ],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -543,11 +590,13 @@ hoge""";
       test("内容は改行できる", () {
         const input = "<small>abc\n**123**\nabc</small>";
         final output = [
-          MfmSmall([
-            MfmText("abc\n"),
-            MfmBold([MfmText("123")]),
-            MfmText("\nabc"),
-          ]),
+          const MfmSmall(
+            children: [
+              MfmText(text: "abc\n"),
+              MfmBold(children: [MfmText(text: "123")]),
+              MfmText(text: "\nabc"),
+            ],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -557,7 +606,7 @@ hoge""";
       test("basic", () {
         const input = "<i>abc</i>";
         final output = [
-          MfmItalic([MfmText("abc")]),
+          const MfmItalic(children: [MfmText(text: "abc")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -565,11 +614,13 @@ hoge""";
       test("内容にはインライン構文を利用できる", () {
         const input = "<i>abc**123**abc</i>";
         final output = [
-          MfmItalic([
-            MfmText("abc"),
-            MfmBold([MfmText("123")]),
-            MfmText("abc"),
-          ]),
+          const MfmItalic(
+            children: [
+              MfmText(text: "abc"),
+              MfmBold(children: [MfmText(text: "123")]),
+              MfmText(text: "abc"),
+            ],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -577,11 +628,13 @@ hoge""";
       test("内容は改行できる", () {
         const input = "<i>abc\n**123**\nabc</i>";
         final output = [
-          MfmItalic([
-            MfmText("abc\n"),
-            MfmBold([MfmText("123")]),
-            MfmText("\nabc"),
-          ]),
+          const MfmItalic(
+            children: [
+              MfmText(text: "abc\n"),
+              MfmBold(children: [MfmText(text: "123")]),
+              MfmText(text: "\nabc"),
+            ],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -591,7 +644,7 @@ hoge""";
       test("basic", () {
         const input = "*abc*";
         final output = [
-          MfmItalic([MfmText("abc")]),
+          const MfmItalic(children: [MfmText(text: "abc")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -599,9 +652,9 @@ hoge""";
       test("basic 2", () {
         const input = "before *abc* after";
         final output = [
-          MfmText("before "),
-          MfmItalic([MfmText("abc")]),
-          MfmText(" after"),
+          const MfmText(text: "before "),
+          const MfmItalic(children: [MfmText(text: "abc")]),
+          const MfmText(text: " after"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -609,9 +662,9 @@ hoge""";
       test("basic 3", () {
         const input = "before *a b c* after";
         final output = [
-          MfmText("before "),
-          MfmItalic([MfmText("a b c")]),
-          MfmText(" after"),
+          const MfmText(text: "before "),
+          const MfmItalic(children: [MfmText(text: "a b c")]),
+          const MfmText(text: " after"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -620,14 +673,14 @@ hoge""";
           "ignore a italic syntax if the before char is either a space nor an LF nor [^a-z0-9]i",
           () {
         const input = "before*abc*after";
-        final output = [MfmText("before*abc*after")];
+        final output = [const MfmText(text: "before*abc*after")];
         expect(parse(input), orderedEquals(output));
 
         const input2 = "あいう*abc*えお";
         final output2 = [
-          MfmText("あいう"),
-          MfmItalic([MfmText("abc")]),
-          MfmText("えお"),
+          const MfmText(text: "あいう"),
+          const MfmItalic(children: [MfmText(text: "abc")]),
+          const MfmText(text: "えお"),
         ];
         expect(parse(input2), orderedEquals(output2));
       });
@@ -637,7 +690,7 @@ hoge""";
       test("basic", () {
         const input = "_abc_";
         final output = [
-          MfmItalic([MfmText("abc")]),
+          const MfmItalic(children: [MfmText(text: "abc")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -645,9 +698,9 @@ hoge""";
       test("basic 2", () {
         const input = "before _abc_ after";
         final output = [
-          MfmText("before "),
-          MfmItalic([MfmText("abc")]),
-          MfmText(" after"),
+          const MfmText(text: "before "),
+          const MfmItalic(children: [MfmText(text: "abc")]),
+          const MfmText(text: " after"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -655,9 +708,9 @@ hoge""";
       test("basic 3", () {
         const input = "before _a b c_ after";
         final output = [
-          MfmText("before "),
-          MfmItalic([MfmText("a b c")]),
-          MfmText(" after"),
+          const MfmText(text: "before "),
+          const MfmItalic(children: [MfmText(text: "a b c")]),
+          const MfmText(text: " after"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -666,14 +719,14 @@ hoge""";
           "ignore a italic syntax if the before char is either a space nor an LF nor [^a-z0-9]i",
           () {
         const input = "before_abc_after";
-        final output = [MfmText("before_abc_after")];
+        final output = [const MfmText(text: "before_abc_after")];
         expect(parse(input), orderedEquals(output));
 
         const input2 = "あいう_abc_えお";
         final output2 = [
-          MfmText("あいう"),
-          MfmItalic([MfmText("abc")]),
-          MfmText("えお"),
+          const MfmText(text: "あいう"),
+          const MfmItalic(children: [MfmText(text: "abc")]),
+          const MfmText(text: "えお"),
         ];
         expect(parse(input2), orderedEquals(output2));
       });
@@ -683,7 +736,7 @@ hoge""";
       test("basic", () {
         const input = "<s>foo</s>";
         final output = [
-          MfmStrike([MfmText("foo")]),
+          const MfmStrike(children: [MfmText(text: "foo")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -693,7 +746,7 @@ hoge""";
       test("basic", () {
         const input = "~~foo~~";
         final output = [
-          MfmStrike([MfmText("foo")]),
+          const MfmStrike(children: [MfmText(text: "foo")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -702,19 +755,21 @@ hoge""";
     group("inlineCode", () {
       test("basic", () {
         const input = '`var x = "Strawberry Crisis";`';
-        final output = [MfmInlineCode(code: 'var x = "Strawberry Crisis";')];
+        final output = [
+          const MfmInlineCode(code: 'var x = "Strawberry Crisis";'),
+        ];
         expect(parse(input), output);
       });
 
       test("disallow line break", () {
         const input = "`foo\nbar`";
-        final output = [MfmText("`foo\nbar`")];
+        final output = [const MfmText(text: "`foo\nbar`")];
         expect(parse(input), output);
       });
 
       test("disallow ´", () {
         const input = "`foo´bar`";
-        final output = [MfmText("`foo´bar`")];
+        final output = [const MfmText(text: "`foo´bar`")];
         expect(parse(input), output);
       });
     });
@@ -723,7 +778,9 @@ hoge""";
       test("basic", () {
         const input = '\\(x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}\\)';
         final output = [
-          MfmMathInline(formula: 'x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}'),
+          const MfmMathInline(
+            formula: 'x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}',
+          ),
         ];
         expect(parse(input), output);
       });
@@ -732,32 +789,42 @@ hoge""";
     group("mention", () {
       test("basic", () {
         const input = "@abc";
-        final output = [MfmMention("abc", null, "@abc")];
+        final output = [const MfmMention(username: "abc", acct: "@abc")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("basic 2", () {
         const input = "before @abc after";
         final output = [
-          MfmText("before "),
-          MfmMention("abc", null, "@abc"),
-          MfmText(" after"),
+          const MfmText(text: "before "),
+          const MfmMention(username: "abc", acct: "@abc"),
+          const MfmText(text: " after"),
         ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("basic remote", () {
         const input = "@abc@misskey.io";
-        final output = [MfmMention("abc", "misskey.io", "@abc@misskey.io")];
+        final output = [
+          const MfmMention(
+            username: "abc",
+            host: "misskey.io",
+            acct: "@abc@misskey.io",
+          ),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("basic remote 2", () {
         const input = "before @abc@misskey.io after";
         final output = [
-          MfmText("before "),
-          MfmMention("abc", "misskey.io", "@abc@misskey.io"),
-          MfmText(" after"),
+          const MfmText(text: "before "),
+          const MfmMention(
+            username: "abc",
+            host: "misskey.io",
+            acct: "@abc@misskey.io",
+          ),
+          const MfmText(text: " after"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -765,88 +832,111 @@ hoge""";
       test("basic remote 3", () {
         const input = "before\n@abc@misskey.io\nafter";
         final output = [
-          MfmText("before\n"),
-          MfmMention("abc", "misskey.io", "@abc@misskey.io"),
-          MfmText("\nafter"),
+          const MfmText(text: "before\n"),
+          const MfmMention(
+            username: "abc",
+            host: "misskey.io",
+            acct: "@abc@misskey.io",
+          ),
+          const MfmText(text: "\nafter"),
         ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore format of mail address", () {
         const input = "abc@example.com";
-        final output = [MfmText("abc@example.com")];
+        final output = [const MfmText(text: "abc@example.com")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("detect as a mention if the before char is [^a-z0-9]i", () {
         const input = "あいう@abc";
-        final output = [MfmText("あいう"), MfmMention("abc", null, "@abc")];
+        final output = [
+          const MfmText(text: "あいう"),
+          const MfmMention(username: "abc", acct: "@abc"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("invalid char only username", () {
         const input = "@-";
-        final output = [MfmText("@-")];
+        final output = [const MfmText(text: "@-")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("invalid char only hostname", () {
         const input = "@abc@.";
-        final output = [MfmText("@abc@.")];
+        final output = [const MfmText(text: "@abc@.")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("allow `-` in username", () {
         const input = "@abc-d";
-        final output = [MfmMention("abc-d", null, "@abc-d")];
+        final output = [
+          const MfmMention(username: "abc-d", acct: "@abc-d"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("disallow `-` in head of username", () {
         const input = "@-abc";
-        final output = [MfmText("@-abc")];
+        final output = [const MfmText(text: "@-abc")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("disallow `-` in tail of username", () {
         const input = "@abc-";
-        final output = [MfmMention("abc", null, "@abc"), MfmText("-")];
+        final output = [
+          const MfmMention(username: "abc", acct: "@abc"),
+          const MfmText(text: "-"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("allow `.` in middle of username", () {
         const input = "@a.bc";
-        final output = [MfmMention("a.bc", null, "@a.bc")];
+        final output = [
+          const MfmMention(username: "a.bc", acct: "@a.bc"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("disallow `.` in tail of username", () {
         const input = "@abc.";
-        final output = [MfmMention("abc", null, "@abc"), MfmText(".")];
+        final output = [
+          const MfmMention(username: "abc", acct: "@abc"),
+          const MfmText(text: "."),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("disallow `.` in head of hostname", () {
         const input = "@abc@.aaa";
-        final output = [MfmText("@abc@.aaa")];
+        final output = [const MfmText(text: "@abc@.aaa")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("disallow `.` in tail of hostname", () {
         const input = "@abc@aaa.";
-        final output = [MfmMention("abc", "aaa", "@abc@aaa"), MfmText(".")];
+        final output = [
+          const MfmMention(username: "abc", host: "aaa", acct: "@abc@aaa"),
+          const MfmText(text: "."),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("disallow `-` in head of hostname", () {
         const input = "@abc@-aaa";
-        final output = [MfmText("@abc@-aaa")];
+        final output = [const MfmText(text: "@abc@-aaa")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("disallow `-` in tail of username", () {
         const input = "@abc@aaa-";
-        final output = [MfmMention("abc", "aaa", "@abc@aaa"), MfmText("-")];
+        final output = [
+          const MfmMention(username: "abc", host: "aaa", acct: "@abc@aaa"),
+          const MfmText(text: "-"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -854,16 +944,16 @@ hoge""";
     group("hashtag", () {
       test("basic", () {
         const input = "#abc";
-        final output = [MfmHashTag("abc")];
+        final output = [const MfmHashTag(hashTag: "abc")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("basic 2", () {
         const input = "before #abc after";
         final output = [
-          MfmText("before "),
-          MfmHashTag("abc"),
-          MfmText(" after"),
+          const MfmText(text: "before "),
+          const MfmHashTag(hashTag: "abc"),
+          const MfmText(text: " after"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -871,9 +961,9 @@ hoge""";
       test("with keycap number sign", () {
         const input = "#️⃣abc123 #abc";
         final output = [
-          MfmUnicodeEmoji("#️⃣"),
-          MfmText("abc123 "),
-          MfmHashTag("abc"),
+          const MfmUnicodeEmoji(emoji: "#️⃣"),
+          const MfmText(text: "abc123 "),
+          const MfmHashTag(hashTag: "abc"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -881,9 +971,9 @@ hoge""";
       test("with keycap number sign 2", () {
         const input = "abc\n#️⃣abc";
         final output = [
-          MfmText("abc\n"),
-          MfmUnicodeEmoji("#️⃣"),
-          MfmText("abc"),
+          const MfmText(text: "abc\n"),
+          const MfmUnicodeEmoji(emoji: "#️⃣"),
+          const MfmText(text: "abc"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -892,113 +982,157 @@ hoge""";
           "ignore a hashtag if the before char is neither a space nor an LF nor [^a-z0-9]i",
           () {
         const input = "abc#abc";
-        final output = [MfmText("abc#abc")];
+        final output = [const MfmText(text: "abc#abc")];
         expect(parse(input), orderedEquals(output));
 
         const input2 = "あいう#abc";
-        final output2 = [MfmText("あいう"), MfmHashTag("abc")];
+        final output2 = [
+          const MfmText(text: "あいう"),
+          const MfmHashTag(hashTag: "abc"),
+        ];
         expect(parse(input2), orderedEquals(output2));
       });
 
       test("ignore comma and period", () {
         const input = "Foo #bar, baz #piyo.";
         final output = [
-          MfmText("Foo "),
-          MfmHashTag("bar"),
-          MfmText(", baz "),
-          MfmHashTag("piyo"),
-          MfmText("."),
+          const MfmText(text: "Foo "),
+          const MfmHashTag(hashTag: "bar"),
+          const MfmText(text: ", baz "),
+          const MfmHashTag(hashTag: "piyo"),
+          const MfmText(text: "."),
         ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore exclamation mark", () {
         const input = "#Foo!";
-        final output = [MfmHashTag("Foo"), MfmText("!")];
+        final output = [
+          const MfmHashTag(hashTag: "Foo"),
+          const MfmText(text: "!"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore colon", () {
         const input = "#Foo:";
-        final output = [MfmHashTag("Foo"), MfmText(":")];
+        final output = [
+          const MfmHashTag(hashTag: "Foo"),
+          const MfmText(text: ":"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore single quote", () {
         const input = "#Foo'";
-        final output = [MfmHashTag("Foo"), MfmText("'")];
+        final output = [
+          const MfmHashTag(hashTag: "Foo"),
+          const MfmText(text: "'"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore double quote", () {
         const input = '#Foo"';
-        final output = [MfmHashTag("Foo"), MfmText('"')];
+        final output = [
+          const MfmHashTag(hashTag: "Foo"),
+          const MfmText(text: '"'),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore square bracket", () {
         const input = "#Foo]";
-        final output = [MfmHashTag("Foo"), MfmText("]")];
+        final output = [
+          const MfmHashTag(hashTag: "Foo"),
+          const MfmText(text: "]"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore slash", () {
         const input = "#Foo/bar";
-        final output = [MfmHashTag("Foo"), MfmText("/bar")];
+        final output = [
+          const MfmHashTag(hashTag: "Foo"),
+          const MfmText(text: "/bar"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore angle bracket", () {
         const input = "#Foo<bar>";
-        final output = [MfmHashTag("Foo"), MfmText("<bar>")];
+        final output = [
+          const MfmHashTag(hashTag: "Foo"),
+          const MfmText(text: "<bar>"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("allow including number", () {
         const input = "#foo123";
-        final output = [MfmHashTag("foo123")];
+        final output = [const MfmHashTag(hashTag: "foo123")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("with brackets ()", () {
         const input = "(#foo)";
-        final output = [MfmText("("), MfmHashTag("foo"), MfmText(")")];
+        final output = [
+          const MfmText(text: "("),
+          const MfmHashTag(hashTag: "foo"),
+          const MfmText(text: ")"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("with brackets 「」", () {
         const input = "「#foo」";
-        final output = [MfmText("「"), MfmHashTag("foo"), MfmText("」")];
+        final output = [
+          const MfmText(text: "「"),
+          const MfmHashTag(hashTag: "foo"),
+          const MfmText(text: "」"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("with mix brackets", () {
         const input = "「#foo(bar)」";
-        final output = [MfmText("「"), MfmHashTag("foo(bar)"), MfmText("」")];
+        final output = [
+          const MfmText(text: "「"),
+          const MfmHashTag(hashTag: "foo(bar)"),
+          const MfmText(text: "」"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("with brackets () (space before)", () {
         const input = "(bar #foo)";
-        final output = [MfmText("(bar "), MfmHashTag("foo"), MfmText(")")];
+        final output = [
+          const MfmText(text: "(bar "),
+          const MfmHashTag(hashTag: "foo"),
+          const MfmText(text: ")"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("with brackets 「」(space before)", () {
         const input = "「bar #foo」";
-        final output = [MfmText("「bar "), MfmHashTag("foo"), MfmText("」")];
+        final output = [
+          const MfmText(text: "「bar "),
+          const MfmHashTag(hashTag: "foo"),
+          const MfmText(text: "」"),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("disallow number only", () {
         const input = "#123";
-        final output = [MfmText("#123")];
+        final output = [const MfmText(text: "#123")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("disallow number only (with brackets)", () {
         const input = "(#123)";
-        final output = [MfmText("(#123)")];
+        final output = [const MfmText(text: "(#123)")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -1006,53 +1140,60 @@ hoge""";
     group("url", () {
       test("basic", () {
         const input = "https://misskey.io/@ai";
-        final output = [MfmURL("https://misskey.io/@ai", false)];
+        final output = [
+          const MfmURL(value: "https://misskey.io/@ai", brackets: false),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("with other texts", () {
         const input = "official instance: https://misskey.io/@ai.";
         final output = [
-          MfmText("official instance: "),
-          MfmURL("https://misskey.io/@ai", false),
-          MfmText("."),
+          const MfmText(text: "official instance: "),
+          const MfmURL(value: "https://misskey.io/@ai", brackets: false),
+          const MfmText(text: "."),
         ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore trailing period", () {
         const input = "https://misskey.io/@ai.";
-        final output = [MfmURL("https://misskey.io/@ai", false), MfmText(".")];
+        final output = [
+          const MfmURL(value: "https://misskey.io/@ai", brackets: false),
+          const MfmText(text: "."),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("disallow period only.", () {
         const input = "https://.";
-        final output = [MfmText("https://.")];
+        final output = [const MfmText(text: "https://.")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore trailing periods", () {
         const input = "https://misskey.io/@ai...";
         final output = [
-          MfmURL("https://misskey.io/@ai", false),
-          MfmText("..."),
+          const MfmURL(value: "https://misskey.io/@ai", brackets: false),
+          const MfmText(text: "..."),
         ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("with brackets", () {
         const input = "https://example.com/foo(bar)";
-        final output = [MfmURL("https://example.com/foo(bar)", false)];
+        final output = [
+          const MfmURL(value: "https://example.com/foo(bar)", brackets: false),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("ignore parent brackets", () {
         const input = "(https://example.com/foo)";
         final output = [
-          MfmText("("),
-          MfmURL("https://example.com/foo", false),
-          MfmText(")"),
+          const MfmText(text: "("),
+          const MfmURL(value: "https://example.com/foo", brackets: false),
+          const MfmText(text: ")"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1060,9 +1201,9 @@ hoge""";
       test("ignore parent brackets(2)", () {
         const input = "(foo https://example.com/foo)";
         final output = [
-          MfmText("(foo "),
-          MfmURL("https://example.com/foo", false),
-          MfmText(")"),
+          const MfmText(text: "(foo "),
+          const MfmURL(value: "https://example.com/foo", brackets: false),
+          const MfmText(text: ")"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1070,9 +1211,9 @@ hoge""";
       test("ignore parent brackets with internal brackets", () {
         const input = "(https://example.com/foo(bar))";
         final output = [
-          MfmText("("),
-          MfmURL("https://example.com/foo(bar)", false),
-          MfmText(")"),
+          const MfmText(text: "("),
+          const MfmURL(value: "https://example.com/foo(bar)", brackets: false),
+          const MfmText(text: ")"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1080,9 +1221,9 @@ hoge""";
       test("ignore parent []", () {
         const input = "foo [https://example.com/foo] bar";
         final output = [
-          MfmText("foo ["),
-          MfmURL("https://example.com/foo", false),
-          MfmText("] bar"),
+          const MfmText(text: "foo ["),
+          const MfmURL(value: "https://example.com/foo", brackets: false),
+          const MfmText(text: "] bar"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1092,8 +1233,9 @@ hoge""";
         const input =
             "https://たまにポプカルやシャマレと一緒にいることもあるどうか忘れないでほしいスズランは我らの光であり.example.com";
         final output = [
-          MfmText(
-            "https://たまにポプカルやシャマレと一緒にいることもあるどうか忘れないでほしいスズランは我らの光であり.example.com",
+          const MfmText(
+            text:
+                "https://たまにポプカルやシャマレと一緒にいることもあるどうか忘れないでほしいスズランは我らの光であり.example.com",
           ),
         ];
         expect(parse(input), orderedEquals(output));
@@ -1101,13 +1243,15 @@ hoge""";
 
       test("match non-ascii characters contained url with angle brackets", () {
         const input = "<https://こいしちゃんするやつ.example.com>";
-        final output = [MfmURL("https://こいしちゃんするやつ.example.com", true)];
+        final output = [
+          const MfmURL(value: "https://こいしちゃんするやつ.example.com", brackets: true),
+        ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("prevent xss", () {
         const input = "javascript:foo";
-        final output = [MfmText("javascript:foo")];
+        final output = [const MfmText(text: "javascript:foo")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -1116,12 +1260,12 @@ hoge""";
       test("basic", () {
         const input = "[official instance](https://misskey.io/@ai).";
         final output = [
-          MfmLink(
+          const MfmLink(
             silent: false,
             url: "https://misskey.io/@ai",
-            children: [MfmText("official instance")],
+            children: [MfmText(text: "official instance")],
           ),
-          MfmText("."),
+          const MfmText(text: "."),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1129,12 +1273,12 @@ hoge""";
       test("silent flag", () {
         const input = "?[official instance](https://misskey.io/@ai).";
         final output = [
-          MfmLink(
+          const MfmLink(
             silent: true,
             url: "https://misskey.io/@ai",
-            children: [MfmText("official instance")],
+            children: [MfmText(text: "official instance")],
           ),
-          MfmText("."),
+          const MfmText(text: "."),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1142,19 +1286,19 @@ hoge""";
       test("with angle brackets url", () {
         const input = "[official instance](<https://misskey.io/@ai>).";
         final output = [
-          MfmLink(
+          const MfmLink(
             silent: false,
             url: "https://misskey.io/@ai",
-            children: [MfmText("official instance")],
+            children: [MfmText(text: "official instance")],
           ),
-          MfmText("."),
+          const MfmText(text: "."),
         ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("prevent xss", () {
         const input = "[click here](javascript:foo)";
-        final output = [MfmText("[click here](javascript:foo)")];
+        final output = [const MfmText(text: "[click here](javascript:foo)")];
         expect(parse(input), orderedEquals(output));
       });
 
@@ -1163,13 +1307,13 @@ hoge""";
           const input =
               "official instance: [https://misskey.io/@ai](https://misskey.io/@ai).";
           final output = [
-            MfmText("official instance: "),
-            MfmLink(
+            const MfmText(text: "official instance: "),
+            const MfmLink(
               silent: false,
               url: "https://misskey.io/@ai",
-              children: [MfmText("https://misskey.io/@ai")],
+              children: [MfmText(text: "https://misskey.io/@ai")],
             ),
-            MfmText("."),
+            const MfmText(text: "."),
           ];
           expect(parse(input), orderedEquals(output));
         });
@@ -1178,16 +1322,16 @@ hoge""";
           const input =
               "official instance: [https://misskey.io/@ai**https://misskey.io/@ai**](https://misskey.io/@ai).";
           final output = [
-            MfmText("official instance: "),
-            MfmLink(
+            const MfmText(text: "official instance: "),
+            const MfmLink(
               silent: false,
               url: "https://misskey.io/@ai",
               children: [
-                MfmText("https://misskey.io/@ai"),
-                MfmBold([MfmText("https://misskey.io/@ai")]),
+                MfmText(text: "https://misskey.io/@ai"),
+                MfmBold(children: [MfmText(text: "https://misskey.io/@ai")]),
               ],
             ),
-            MfmText("."),
+            const MfmText(text: "."),
           ];
           expect(parse(input), orderedEquals(output));
         });
@@ -1198,15 +1342,15 @@ hoge""";
           const input =
               "official instance: [[https://misskey.io/@ai](https://misskey.io/@ai)](https://misskey.io/@ai).";
           final output = [
-            MfmText("official instance: "),
-            MfmLink(
+            const MfmText(text: "official instance: "),
+            const MfmLink(
               silent: false,
               url: "https://misskey.io/@ai",
-              children: [MfmText("[https://misskey.io/@ai")],
+              children: [MfmText(text: "[https://misskey.io/@ai")],
             ),
-            MfmText("]("),
-            MfmURL("https://misskey.io/@ai", false),
-            MfmText(")."),
+            const MfmText(text: "]("),
+            const MfmURL(value: "https://misskey.io/@ai", brackets: false),
+            const MfmText(text: ")."),
           ];
           expect(parse(input), orderedEquals(output));
         });
@@ -1215,17 +1359,21 @@ hoge""";
           const input =
               "official instance: [**[https://misskey.io/@ai](https://misskey.io/@ai)**](https://misskey.io/@ai).";
           final output = [
-            MfmText("official instance: "),
-            MfmLink(
+            const MfmText(text: "official instance: "),
+            const MfmLink(
               silent: false,
               url: "https://misskey.io/@ai",
               children: [
                 MfmBold(
-                  [MfmText("[https://misskey.io/@ai](https://misskey.io/@ai)")],
+                  children: [
+                    MfmText(
+                      text: "[https://misskey.io/@ai](https://misskey.io/@ai)",
+                    ),
+                  ],
                 ),
               ],
             ),
-            MfmText("."),
+            const MfmText(text: "."),
           ];
           expect(parse(input), orderedEquals(output));
         });
@@ -1235,10 +1383,10 @@ hoge""";
         test("basic", () {
           const input = "[@example](https://example.com)";
           final output = [
-            MfmLink(
+            const MfmLink(
               silent: false,
               url: "https://example.com",
-              children: [MfmText("@example")],
+              children: [MfmText(text: "@example")],
             ),
           ];
           expect(parse(input), orderedEquals(output));
@@ -1247,12 +1395,12 @@ hoge""";
         test("nested", () {
           const input = "[@example**@example**](https://example.com)";
           final output = [
-            MfmLink(
+            const MfmLink(
               silent: false,
               url: "https://example.com",
               children: [
-                MfmText("@example"),
-                MfmBold([MfmText("@example")]),
+                MfmText(text: "@example"),
+                MfmBold(children: [MfmText(text: "@example")]),
               ],
             ),
           ];
@@ -1263,10 +1411,10 @@ hoge""";
       test("with brackets", () {
         const input = "[foo](https://example.com/foo(bar))";
         final output = [
-          MfmLink(
+          const MfmLink(
             silent: false,
             url: "https://example.com/foo(bar)",
-            children: [MfmText("foo")],
+            children: [MfmText(text: "foo")],
           ),
         ];
         expect(parse(input), orderedEquals(output));
@@ -1275,13 +1423,13 @@ hoge""";
       test("with parent brackets", () {
         const input = "([foo](https://example.com/foo(bar)))";
         final output = [
-          MfmText("("),
-          MfmLink(
+          const MfmText(text: "("),
+          const MfmLink(
             silent: false,
             url: "https://example.com/foo(bar)",
-            children: [MfmText("foo")],
+            children: [MfmText(text: "foo")],
           ),
-          MfmText(")"),
+          const MfmText(text: ")"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1289,12 +1437,12 @@ hoge""";
       test("with brackets before", () {
         const input = "[test] foo [bar](https://example.com)";
         final output = [
-          MfmText("[test] foo "),
-          MfmLink(
+          const MfmText(text: "[test] foo "),
+          const MfmLink(
             silent: false,
             url: "https://example.com",
             children: [
-              MfmText("bar"),
+              MfmText(text: "bar"),
             ],
           ),
         ];
@@ -1306,7 +1454,7 @@ hoge""";
       test("basic", () {
         const input = r"$[tada abc]";
         final output = [
-          MfmFn(name: "tada", args: {}, children: [MfmText("abc")]),
+          const MfmFn(name: "tada", args: {}, children: [MfmText(text: "abc")]),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1314,10 +1462,10 @@ hoge""";
       test("with a string arguments", () {
         const input = r"$[spin.speed=1.1s a]";
         final output = [
-          MfmFn(
+          const MfmFn(
             name: "spin",
             args: {"speed": "1.1s"},
-            children: [MfmText("a")],
+            children: [MfmText(text: "a")],
           ),
         ];
         expect(parse(input), orderedEquals(output));
@@ -1326,25 +1474,29 @@ hoge""";
       test("with a string arguments 2", () {
         const input = r"$[position.x=-3 a]";
         final output = [
-          MfmFn(name: "position", args: {"x": "-3"}, children: [MfmText("a")]),
+          const MfmFn(
+            name: "position",
+            args: {"x": "-3"},
+            children: [MfmText(text: "a")],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
 
       test("invalid fn name", () {
         const input = r"$[関数 text]";
-        final output = [MfmText(r"$[関数 text]")];
+        final output = [const MfmText(text: r"$[関数 text]")];
         expect(parse(input), orderedEquals(output));
       });
 
       test("nest", () {
         const input = r"$[spin.speed=1.1s $[shake a]]";
         final output = [
-          MfmFn(
+          const MfmFn(
             name: "spin",
             args: {"speed": "1.1s"},
             children: [
-              MfmFn(name: "shake", args: {}, children: [MfmText("a")]),
+              MfmFn(name: "shake", args: {}, children: [MfmText(text: "a")]),
             ],
           ),
         ];
@@ -1356,9 +1508,9 @@ hoge""";
       test("multiple line", () {
         const input = "a\n<plain>\n**Hello**\nworld\n</plain>\nb";
         final output = [
-          MfmText("a\n"),
-          MfmPlain("**Hello**\nworld"),
-          MfmText("\nb"),
+          const MfmText(text: "a\n"),
+          MfmPlain(text: "**Hello**\nworld"),
+          const MfmText(text: "\nb"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1366,9 +1518,9 @@ hoge""";
       test("single line", () {
         const input = "a\n<plain>**Hello** world</plain>\nb";
         final output = [
-          MfmText("a\n"),
-          MfmPlain("**Hello** world"),
-          MfmText("\nb"),
+          const MfmText(text: "a\n"),
+          MfmPlain(text: "**Hello** world"),
+          const MfmText(text: "\nb"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1379,11 +1531,11 @@ hoge""";
         test("basic", () {
           const input = ">>> abc";
           final output = [
-            MfmQuote(
+            const MfmQuote(
               children: [
                 MfmQuote(
                   children: [
-                    MfmText("> abc"),
+                    MfmText(text: "> abc"),
                   ],
                 ),
               ],
@@ -1395,11 +1547,11 @@ hoge""";
         test("basic 2", () {
           const input = ">> **abc**";
           final output = [
-            MfmQuote(
+            const MfmQuote(
               children: [
                 MfmQuote(
                   children: [
-                    MfmText("**abc**"),
+                    MfmText(text: "**abc**"),
                   ],
                 ),
               ],
@@ -1412,11 +1564,15 @@ hoge""";
       test("big", () {
         const input = "<b><b>***abc***</b></b>";
         final output = [
-          MfmBold([
-            MfmBold([
-              MfmText("***abc***"),
-            ]),
-          ]),
+          const MfmBold(
+            children: [
+              MfmBold(
+                children: [
+                  MfmText(text: "***abc***"),
+                ],
+              ),
+            ],
+          ),
         ];
         expect(parse(input, nestLimit: 2), orderedEquals(output));
       });
@@ -1425,11 +1581,15 @@ hoge""";
         test("basic", () {
           const input = "<i><i>**abc**</i></i>";
           final output = [
-            MfmItalic([
-              MfmItalic([
-                MfmText("**abc**"),
-              ]),
-            ]),
+            const MfmItalic(
+              children: [
+                MfmItalic(
+                  children: [
+                    MfmText(text: "**abc**"),
+                  ],
+                ),
+              ],
+            ),
           ];
           expect(parse(input, nestLimit: 2), orderedEquals(output));
         });
@@ -1437,11 +1597,15 @@ hoge""";
         test("tag", () {
           const input = "<i><i><b>abc</b></i></i>";
           final output = [
-            MfmItalic([
-              MfmItalic([
-                MfmText("<b>abc</b>"),
-              ]),
-            ]),
+            const MfmItalic(
+              children: [
+                MfmItalic(
+                  children: [
+                    MfmText(text: "<b>abc</b>"),
+                  ],
+                ),
+              ],
+            ),
           ];
           expect(parse(input, nestLimit: 2), orderedEquals(output));
         });
@@ -1450,11 +1614,15 @@ hoge""";
       test("small", () {
         const input = "<i><i><small>abc</small></i></i>";
         final output = [
-          MfmItalic([
-            MfmItalic([
-              MfmText("<small>abc</small>"),
-            ]),
-          ]),
+          const MfmItalic(
+            children: [
+              MfmItalic(
+                children: [
+                  MfmText(text: "<small>abc</small>"),
+                ],
+              ),
+            ],
+          ),
         ];
         expect(parse(input, nestLimit: 2), orderedEquals(output));
       });
@@ -1462,11 +1630,15 @@ hoge""";
       test("italic", () {
         const input = "<b><b><i>abc</i></b></b>";
         final output = [
-          MfmBold([
-            MfmBold([
-              MfmText("<i>abc</i>"),
-            ]),
-          ]),
+          const MfmBold(
+            children: [
+              MfmBold(
+                children: [
+                  MfmText(text: "<i>abc</i>"),
+                ],
+              ),
+            ],
+          ),
         ];
         expect(parse(input, nestLimit: 2), orderedEquals(output));
       });
@@ -1475,11 +1647,15 @@ hoge""";
         test("basic", () {
           const input = "<b><b>~~abc~~</b></b>";
           final output = [
-            MfmBold([
-              MfmBold([
-                MfmText("~~abc~~"),
-              ]),
-            ]),
+            const MfmBold(
+              children: [
+                MfmBold(
+                  children: [
+                    MfmText(text: "~~abc~~"),
+                  ],
+                ),
+              ],
+            ),
           ];
           expect(parse(input, nestLimit: 2), orderedEquals(output));
         });
@@ -1487,9 +1663,11 @@ hoge""";
         test("tag", () {
           const input = "<b><b><s>abc</s></b></b>";
           final output = [
-            MfmBold([
-              MfmBold([MfmText("<s>abc</s>")]),
-            ]),
+            const MfmBold(
+              children: [
+                MfmBold(children: [MfmText(text: "<s>abc</s>")]),
+              ],
+            ),
           ];
           expect(parse(input, nestLimit: 2), orderedEquals(output));
         });
@@ -1499,38 +1677,59 @@ hoge""";
         test("basic", () {
           const input = "<b>#abc(xyz)</b>";
           final output = [
-            MfmBold([MfmHashTag("abc(xyz)")]),
+            const MfmBold(children: [MfmHashTag(hashTag: "abc(xyz)")]),
           ];
           expect(parse(input, nestLimit: 2), output);
 
           const input2 = "<b>#abc(x(y)z)</b>";
           final output2 = [
-            MfmBold([MfmHashTag("abc"), MfmText("(x(y)z)")]),
+            const MfmBold(
+              children: [
+                MfmHashTag(hashTag: "abc"),
+                MfmText(text: "(x(y)z)"),
+              ],
+            ),
           ];
           expect(parse(input2, nestLimit: 2), output2);
         });
 
         test("outside ()", () {
           const input = "(#abc)";
-          final output = [MfmText("("), MfmHashTag("abc"), MfmText(")")];
+          final output = [
+            const MfmText(text: "("),
+            const MfmHashTag(hashTag: "abc"),
+            const MfmText(text: ")"),
+          ];
           expect(parse(input), orderedEquals(output));
         });
 
         test("outside []", () {
           const input = "[#abc]";
-          final output = [MfmText("["), MfmHashTag("abc"), MfmText("]")];
+          final output = [
+            const MfmText(text: "["),
+            const MfmHashTag(hashTag: "abc"),
+            const MfmText(text: "]"),
+          ];
           expect(parse(input), orderedEquals(output));
         });
 
         test("outside 「」", () {
           const input = "「#abc」";
-          final output = [MfmText("「"), MfmHashTag("abc"), MfmText("」")];
+          final output = [
+            const MfmText(text: "「"),
+            const MfmHashTag(hashTag: "abc"),
+            const MfmText(text: "」"),
+          ];
           expect(parse(input), orderedEquals(output));
         });
 
         test("outside ()", () {
           const input = "(#abc)";
-          final output = [MfmText("("), MfmHashTag("abc"), MfmText(")")];
+          final output = [
+            const MfmText(text: "("),
+            const MfmHashTag(hashTag: "abc"),
+            const MfmText(text: ")"),
+          ];
           expect(parse(input), orderedEquals(output));
         });
       });
@@ -1538,18 +1737,22 @@ hoge""";
       test("url", () {
         const input = "<b>https://example.com/abc(xyz)</b>";
         final output = [
-          MfmBold([
-            MfmURL("https://example.com/abc(xyz)", false),
-          ]),
+          const MfmBold(
+            children: [
+              MfmURL(value: "https://example.com/abc(xyz)", brackets: false),
+            ],
+          ),
         ];
         expect(parse(input, nestLimit: 2), orderedEquals(output));
 
         const input2 = "<b>https://example.com/abc(x(y)z)</b>";
         final output2 = [
-          MfmBold([
-            MfmURL("https://example.com/abc", false),
-            MfmText("(x(y)z)"),
-          ]),
+          const MfmBold(
+            children: [
+              MfmURL(value: "https://example.com/abc", brackets: false),
+              MfmText(text: "(x(y)z)"),
+            ],
+          ),
         ];
         expect(parse(input2, nestLimit: 2), output2);
       });
@@ -1557,11 +1760,15 @@ hoge""";
       test("fn", () {
         const input = r"<b><b>$[a b]</b></b>";
         final output = [
-          MfmBold([
-            MfmBold([
-              MfmText(r"$[a b]"),
-            ]),
-          ]),
+          const MfmBold(
+            children: [
+              MfmBold(
+                children: [
+                  MfmText(text: r"$[a b]"),
+                ],
+              ),
+            ],
+          ),
         ];
         expect(parse(input, nestLimit: 2), output);
       });
@@ -1579,25 +1786,25 @@ https://github.com/syuilo/ai
 </center>
 after""";
       final output = [
-        MfmText("before"),
-        MfmCenter(
+        const MfmText(text: "before"),
+        const MfmCenter(
           children: [
-            MfmText("Hello "),
+            MfmText(text: "Hello "),
             MfmFn(
               name: "tada",
               args: {},
               children: [
-                MfmText("everynyan! "),
-                MfmUnicodeEmoji("🎉"),
+                MfmText(text: "everynyan! "),
+                MfmUnicodeEmoji(emoji: "🎉"),
               ],
             ),
-            MfmText("\n\nI'm "),
-            MfmMention("ai", null, "@ai"),
-            MfmText(", A bot of misskey!\n\n"),
-            MfmURL("https://github.com/syuilo/ai", false),
+            MfmText(text: "\n\nI'm "),
+            MfmMention(username: "ai", acct: "@ai"),
+            MfmText(text: ", A bot of misskey!\n\n"),
+            MfmURL(value: "https://github.com/syuilo/ai", brackets: false),
           ],
         ),
-        MfmText("after"),
+        const MfmText(text: "after"),
       ];
 
       expect(parse(input), orderedEquals(output));

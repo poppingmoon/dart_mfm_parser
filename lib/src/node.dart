@@ -2,57 +2,37 @@ import 'package:collection/collection.dart';
 
 /// Misskey Elements Base Node
 sealed class MfmNode {
-  /// node type.
-  final String type;
-
-  /// elements property. it is compatible for typescript one.
-  final Map<String, dynamic>? props;
-
   /// if node has child, will be array.
   final List<MfmNode>? children;
 
-  MfmNode({required this.type, this.props, this.children});
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) {
-      return true;
-    }
-
-    if (other is MfmNode) {
-      return runtimeType == other.runtimeType &&
-          type == other.type &&
-          const DeepCollectionEquality().equals(props, other.props) &&
-          const DeepCollectionEquality().equals(children, other.children);
-    } else {
-      return false;
-    }
-  }
-
-  @override
-  int get hashCode => Object.hash(type, props, children);
-
-  @override
-  String toString() {
-    return "$type (props: ${props?.entries.toString().replaceAll("\n", "\\n") ?? ""}, children: ${children ?? ""})";
-  }
-}
-
-sealed class MfmSimpleNode extends MfmNode {
-  MfmSimpleNode({required super.type, super.props, super.children});
+  const MfmNode({this.children});
 }
 
 sealed class MfmBlock extends MfmNode {
-  MfmBlock({required super.type, super.props, super.children});
+  const MfmBlock({super.children});
 }
 
-sealed class MfmInline extends MfmSimpleNode {
-  MfmInline({required super.type, super.props, super.children});
+sealed class MfmInline extends MfmNode {
+  const MfmInline({super.children});
 }
 
 /// Quote Node
 class MfmQuote extends MfmBlock {
-  MfmQuote({required super.children}) : super(type: "quote");
+  const MfmQuote({required super.children});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmQuote &&
+            const DeepCollectionEquality().equals(other.children, children));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        runtimeType,
+        const DeepCollectionEquality().hash(children),
+      );
 }
 
 /// Search Node
@@ -60,62 +40,197 @@ class MfmQuote extends MfmBlock {
 class MfmSearch extends MfmBlock {
   final String query;
   final String content;
-  MfmSearch(this.query, this.content)
-      : super(type: "search", props: {"query": query, "content": content});
+
+  const MfmSearch({
+    required this.query,
+    required this.content,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmSearch &&
+            (identical(other.query, query) || other.query == query) &&
+            (identical(other.content, content) || other.content == content));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, query, content);
 }
 
 /// Code Block Node
 class MfmCodeBlock extends MfmBlock {
   final String code;
   final String? lang;
-  MfmCodeBlock(this.code, this.lang)
-      : super(type: "blockCode", props: {"code": code, "lang": lang});
+
+  const MfmCodeBlock({
+    required this.code,
+    this.lang,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmCodeBlock &&
+            (identical(other.code, code) || other.code == code) &&
+            (identical(other.lang, lang) || other.lang == lang));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, code, lang);
 }
 
 class MfmMathBlock extends MfmBlock {
   final String formula;
-  MfmMathBlock(this.formula)
-      : super(type: "MfmMathBlock", props: {"formula": formula});
+
+  const MfmMathBlock({required this.formula});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmMathBlock &&
+            (identical(other.formula, formula) || other.formula == formula));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, formula);
 }
 
 /// Centering Node
 class MfmCenter extends MfmBlock {
-  MfmCenter({super.children}) : super(type: "center");
+  const MfmCenter({super.children});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmCenter &&
+            const DeepCollectionEquality().equals(other.children, children));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        runtimeType,
+        const DeepCollectionEquality().hash(children),
+      );
 }
 
 /// Unicode Emoji Node
 class MfmUnicodeEmoji extends MfmInline {
   final String emoji;
-  MfmUnicodeEmoji(this.emoji)
-      : super(type: "unicodeEmoji", props: {"emoji": emoji});
+
+  const MfmUnicodeEmoji({required this.emoji});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmUnicodeEmoji &&
+            (identical(other.emoji, emoji) || other.emoji == emoji));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, emoji);
 }
 
 /// Misskey style Emoji Node
 class MfmEmojiCode extends MfmInline {
   final String name;
-  MfmEmojiCode(this.name) : super(type: "emojiCode", props: {"name": name});
+
+  const MfmEmojiCode({required this.name});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmEmojiCode &&
+            (identical(other.name, name) || other.name == name));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        runtimeType,
+        const DeepCollectionEquality().hash(children),
+      );
 }
 
 /// Bold Element Node
 class MfmBold extends MfmInline {
-  MfmBold(List<MfmInline> children) : super(type: "bold", children: children);
+  const MfmBold({required List<MfmInline> super.children});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmBold &&
+            const DeepCollectionEquality().equals(other.children, children));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        runtimeType,
+        const DeepCollectionEquality().hash(children),
+      );
 }
 
 /// Small Element Node
 class MfmSmall extends MfmInline {
-  MfmSmall(List<MfmInline> children) : super(type: "small", children: children);
+  const MfmSmall({required List<MfmInline> super.children});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmSmall &&
+            const DeepCollectionEquality().equals(other.children, children));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        runtimeType,
+        const DeepCollectionEquality().hash(children),
+      );
 }
 
 /// Italic Element Node
 class MfmItalic extends MfmInline {
-  MfmItalic(List<MfmInline> children)
-      : super(type: "small", children: children);
+  const MfmItalic({required List<MfmInline> super.children});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmItalic &&
+            const DeepCollectionEquality().equals(other.children, children));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        runtimeType,
+        const DeepCollectionEquality().hash(children),
+      );
 }
 
 /// Strike Element Node
 class MfmStrike extends MfmInline {
-  MfmStrike(List<MfmInline> children)
-      : super(type: "strike", children: children);
+  const MfmStrike({required List<MfmInline> super.children});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmStrike &&
+            const DeepCollectionEquality().equals(other.children, children));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        runtimeType,
+        const DeepCollectionEquality().hash(children),
+      );
 }
 
 /// Plain Element Node
@@ -123,7 +238,19 @@ class MfmStrike extends MfmInline {
 /// text will be unapplicated misskey element.
 class MfmPlain extends MfmInline {
   final String text;
-  MfmPlain(this.text) : super(type: "plain", children: [MfmText(text)]);
+
+  MfmPlain({required this.text}) : super(children: [MfmText(text: text)]);
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmPlain &&
+            (identical(other.text, text) || other.text == text));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, text);
 }
 
 /// Misskey Style Function Node
@@ -134,27 +261,82 @@ class MfmFn extends MfmInline {
   final String name;
   final Map<String, String> args;
 
-  MfmFn({required this.name, required this.args, super.children})
-      : super(type: "fn", props: {"name": name, "args": args});
+  const MfmFn({
+    required this.name,
+    required this.args,
+    super.children,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmFn &&
+            (identical(other.name, name) || other.name == name) &&
+            const DeepCollectionEquality().equals(other.args, args) &&
+            const DeepCollectionEquality().equals(other.children, children));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        runtimeType,
+        name,
+        const DeepCollectionEquality().hash(args),
+        const DeepCollectionEquality().hash(children),
+      );
 }
 
 /// Inline Code Node
 class MfmInlineCode extends MfmInline {
   final String code;
-  MfmInlineCode({required this.code})
-      : super(type: "inlineCode", props: {"code": code});
+
+  const MfmInlineCode({required this.code});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmInlineCode &&
+            (identical(other.code, code) || other.code == code));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, code);
 }
 
 class MfmMathInline extends MfmInline {
   final String formula;
-  MfmMathInline({required this.formula})
-      : super(type: "mathInline", props: {"formula": formula});
+
+  const MfmMathInline({required this.formula});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmMathInline &&
+            (identical(other.formula, formula) || other.formula == formula));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, formula);
 }
 
 /// Basically Text Node
 class MfmText extends MfmInline {
   final String text;
-  MfmText(this.text) : super(type: "text", props: {"text": text});
+
+  const MfmText({required this.text});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmText &&
+            (identical(other.text, text) || other.text == text));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, text);
 }
 
 /// Mention Node
@@ -167,18 +349,43 @@ class MfmMention extends MfmInline {
   final String? host;
   final String acct;
 
-  MfmMention(this.username, this.host, this.acct)
-      : super(
-          type: "mention",
-          props: {"username": username, "host": host, "acct": acct},
-        );
+  const MfmMention({
+    required this.username,
+    this.host,
+    required this.acct,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmMention &&
+            (identical(other.username, username) ||
+                other.username == username) &&
+            (identical(other.host, host) || other.host == host) &&
+            (identical(other.acct, acct) || other.acct == acct));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, username, host, acct);
 }
 
 /// Hashtag Node
 class MfmHashTag extends MfmInline {
   final String hashTag;
-  MfmHashTag(this.hashTag)
-      : super(type: "hashtag", props: {"hashtag": hashTag});
+
+  const MfmHashTag({required this.hashTag});
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmHashTag &&
+            (identical(other.hashTag, hashTag) || other.hashTag == hashTag));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, hashTag);
 }
 
 /// Link Node
@@ -188,11 +395,23 @@ class MfmLink extends MfmInline {
   final String url;
   final bool silent;
 
-  MfmLink({required this.silent, required this.url, super.children})
-      : super(
-          type: "link",
-          props: {"silent": silent, "url": url},
-        );
+  const MfmLink({
+    required this.silent,
+    required this.url,
+    super.children,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmLink &&
+            (identical(other.url, url) || other.url == url) &&
+            (identical(other.silent, silent) || other.silent == silent));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, url, silent);
 }
 
 /// URL Node
@@ -202,12 +421,21 @@ class MfmURL extends MfmInline {
   final String value;
   final bool? brackets;
 
-  MfmURL(this.value, this.brackets)
-      : super(
-          type: "url",
-          props: {
-            "url": value,
-            "brackets": brackets,
-          },
-        );
+  const MfmURL({
+    required this.value,
+    this.brackets,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is MfmURL &&
+            (identical(other.value, value) || other.value == value) &&
+            (identical(other.brackets, brackets) ||
+                other.brackets == brackets));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, value, brackets);
 }
