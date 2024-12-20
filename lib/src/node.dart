@@ -371,21 +371,21 @@ class MfmMention extends MfmInline {
 }
 
 /// Hashtag Node
-class MfmHashTag extends MfmInline {
-  final String hashTag;
+class MfmHashtag extends MfmInline {
+  final String hashtag;
 
-  const MfmHashTag({required this.hashTag});
+  const MfmHashtag({required this.hashtag});
 
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is MfmHashTag &&
-            (identical(other.hashTag, hashTag) || other.hashTag == hashTag));
+            other is MfmHashtag &&
+            (identical(other.hashtag, hashtag) || other.hashtag == hashtag));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, hashTag);
+  int get hashCode => Object.hash(runtimeType, hashtag);
 }
 
 /// Link Node
@@ -417,12 +417,12 @@ class MfmLink extends MfmInline {
 /// URL Node
 ///
 /// if brackets is true, will display "<https://...>"
-class MfmURL extends MfmInline {
-  final String value;
+class MfmUrl extends MfmInline {
+  final String url;
   final bool? brackets;
 
-  const MfmURL({
-    required this.value,
+  const MfmUrl({
+    required this.url,
     this.brackets,
   });
 
@@ -430,12 +430,12 @@ class MfmURL extends MfmInline {
   bool operator ==(Object other) {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
-            other is MfmURL &&
-            (identical(other.value, value) || other.value == value) &&
+            other is MfmUrl &&
+            (identical(other.url, url) || other.url == url) &&
             (identical(other.brackets, brackets) ||
                 other.brackets == brackets));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, value, brackets);
+  int get hashCode => Object.hash(runtimeType, url, brackets);
 }

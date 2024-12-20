@@ -765,7 +765,7 @@ class Language {
             if (RegExp(r"^[0-9]+$").hasMatch(value)) {
               return failure();
             }
-            return success(resultIndex, MfmHashTag(hashTag: value));
+            return success(resultIndex, MfmHashtag(hashtag: value));
           },
         );
       },
@@ -796,10 +796,10 @@ class Language {
         ]).map((result) {
           final silent = ((result as List<dynamic>)[1] == '?[');
           final label = result[2] as List<dynamic>;
-          final url = result[5] as MfmURL;
+          final url = result[5] as MfmUrl;
           return MfmLink(
             silent: silent,
-            url: url.value,
+            url: url.url,
             children: mergeText(label),
           );
         });
@@ -851,8 +851,8 @@ class Language {
             }
             return success(
               modifiedIndex,
-              MfmURL(
-                value: "$schema$content",
+              MfmUrl(
+                url: "$schema$content",
                 brackets: false,
               ),
             );
@@ -875,7 +875,7 @@ class Language {
           ).many(1),
           close,
         ]).text();
-        return Parser<MfmURL>(
+        return Parser<MfmUrl>(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
             if (result is! Success<String>) {
@@ -884,8 +884,8 @@ class Language {
             final text = result.value.slice(1, result.value.length - 1);
             return success(
               result.index,
-              MfmURL(
-                value: text,
+              MfmUrl(
+                url: text,
                 brackets: true,
               ),
             );
