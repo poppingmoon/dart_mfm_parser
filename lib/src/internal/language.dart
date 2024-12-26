@@ -1,6 +1,6 @@
 import 'package:mfm_parser/src/internal/core/core.dart';
 import 'package:mfm_parser/src/internal/extension/string_extension.dart';
-import 'package:mfm_parser/src/internal/tweemoji_parser.dart';
+import 'package:mfm_parser/src/internal/twemoji_parser.dart';
 import 'package:mfm_parser/src/internal/utils.dart';
 import 'package:mfm_parser/src/node.dart';
 
@@ -478,7 +478,7 @@ class Language {
         });
       },
       "unicodeEmoji": () {
-        return regexp(tweEmojiParser)
+        return regexp(twemojiParser)
             .map((content) => MfmUnicodeEmoji(emoji: content));
       },
       "emojiCode": () {
