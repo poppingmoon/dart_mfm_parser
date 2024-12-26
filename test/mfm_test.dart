@@ -1448,6 +1448,12 @@ hoge""";
         ];
         expect(parse(input), orderedEquals(output));
       });
+
+      test('bad url in url part', () {
+        const input = "[test](http://..)";
+        final output = [const MfmText(text: "[test](http://..)")];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("fn", () {
