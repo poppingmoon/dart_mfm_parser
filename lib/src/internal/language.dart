@@ -96,7 +96,8 @@ class Language {
 
   Language() {
     _l = createLanguage({
-      "full": () => alt([
+      "full":
+          () => alt([
             unicodeEmoji,
             centerTag,
             smallTag,
@@ -126,7 +127,8 @@ class Language {
             text,
           ]),
       "simple": () => alt([unicodeEmoji, emojiCode, plainTag, text]),
-      "inline": () => alt([
+      "inline":
+          () => alt([
             unicodeEmoji,
             smallTag,
             plainTag,
@@ -151,26 +153,20 @@ class Language {
             text,
           ]),
       "quote": () {
-        final lines = seq(
-          [
-            str(">"),
-            space.option(),
-            seq([notMatch(newLine), char], select: 1).many(0).text(),
-          ],
-          select: 2,
-        ).sep(newLine, 1);
+        final lines = seq([
+          str(">"),
+          space.option(),
+          seq([notMatch(newLine), char], select: 1).many(0).text(),
+        ], select: 2).sep(newLine, 1);
 
-        final parser = seq(
-          [
-            newLine.option(),
-            newLine.option(),
-            lineBegin,
-            lines,
-            newLine.option(),
-            newLine.option(),
-          ],
-          select: 3,
-        );
+        final parser = seq([
+          newLine.option(),
+          newLine.option(),
+          lineBegin,
+          lines,
+          newLine.option(),
+          newLine.option(),
+        ], select: 3);
 
         return Parser<MfmQuote>(
           handler: (input, index, state) {
@@ -179,18 +175,19 @@ class Language {
               return failure();
             }
 
-            final Success(
-              value: List<dynamic> contents,
-              index: quoteIndex,
-            ) = result;
+            final Success(value: List<dynamic> contents, index: quoteIndex) =
+                result;
 
             if (contents.length == 1 && (contents[0] as String).isEmpty) {
               return failure();
             }
 
             final contentParser = nest(fullParser).many(0);
-            final contentResult =
-                contentParser.handler(contents.join("\n"), 0, state);
+            final contentResult = contentParser.handler(
+              contents.join("\n"),
+              0,
+              state,
+            );
 
             if (contentResult is! Success<List<dynamic>>) {
               return failure();
@@ -211,13 +208,10 @@ class Language {
           mark,
           seq([notMatch(newLine), char], select: 1).many(0),
           newLine,
-          seq(
-            [
-              notMatch(seq([newLine, mark, lineEnd])),
-              char,
-            ],
-            select: 1,
-          ).many(1),
+          seq([
+            notMatch(seq([newLine, mark, lineEnd])),
+            char,
+          ], select: 1).many(1),
           newLine,
           mark,
           lineEnd,
@@ -227,36 +221,27 @@ class Language {
               ((result as List<dynamic>)[3] as List<dynamic>).join().trim();
           final code = (result[5] as List<dynamic>).join();
 
-          return MfmCodeBlock(
-            code: code,
-            lang: lang.isNotEmpty ? lang : null,
-          );
+          return MfmCodeBlock(code: code, lang: lang.isNotEmpty ? lang : null);
         });
       },
       "mathBlock": () {
         final open = str(r"\[");
         final close = str(r"\]");
 
-        return seq(
-          [
-            newLine.option(),
-            lineBegin,
-            open,
-            newLine.option(),
-            seq(
-              [
-                notMatch(seq([newLine.option(), close])),
-                char,
-              ],
-              select: 1,
-            ).many(1),
-            newLine.option(),
-            close,
-            lineEnd,
-            newLine.option(),
-          ],
-          select: 4,
-        ).map(
+        return seq([
+          newLine.option(),
+          lineBegin,
+          open,
+          newLine.option(),
+          seq([
+            notMatch(seq([newLine.option(), close])),
+            char,
+          ], select: 1).many(1),
+          newLine.option(),
+          close,
+          lineEnd,
+          newLine.option(),
+        ], select: 4).map(
           (result) => MfmMathBlock(formula: (result as List<dynamic>).join()),
         );
       },
@@ -264,26 +249,20 @@ class Language {
         final open = str("<center>");
         final close = str("</center>");
 
-        return seq(
-          [
-            newLine.option(),
-            lineBegin,
-            open,
-            newLine.option(),
-            seq(
-              [
-                notMatch(seq([newLine.option(), close])),
-                nest(inline),
-              ],
-              select: 1,
-            ).many(1),
-            newLine.option(),
-            close,
-            lineEnd,
-            newLine.option(),
-          ],
-          select: 4,
-        ).map(
+        return seq([
+          newLine.option(),
+          lineBegin,
+          open,
+          newLine.option(),
+          seq([
+            notMatch(seq([newLine.option(), close])),
+            nest(inline),
+          ], select: 1).many(1),
+          newLine.option(),
+          close,
+          lineEnd,
+          newLine.option(),
+        ], select: 4).map(
           (result) => MfmCenter(
             children: mergeText(result as List<dynamic>).cast<MfmInline>(),
           ),
@@ -316,8 +295,10 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmBold(
-            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
-                .cast<MfmInline>(),
+            children:
+                mergeText(
+                  (result as List<dynamic>)[1] as List<dynamic>,
+                ).cast<MfmInline>(),
           );
         });
       },
@@ -332,21 +313,20 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmBold(
-            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
-                .cast<MfmInline>(),
+            children:
+                mergeText(
+                  (result as List<dynamic>)[1] as List<dynamic>,
+                ).cast<MfmInline>(),
           );
         });
       },
       "boldUnder": () {
         final mark = str("__");
-        return seq(
-          [
-            mark,
-            alt([alphaAndNum, space]).many(1),
-            mark,
-          ],
-          select: 1,
-        ).map(
+        return seq([
+          mark,
+          alt([alphaAndNum, space]).many(1),
+          mark,
+        ], select: 1).map(
           (result) => MfmBold(
             children: [MfmText(text: (result as List<String>).join())],
           ),
@@ -362,8 +342,10 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmSmall(
-            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
-                .cast<MfmInline>(),
+            children:
+                mergeText(
+                  (result as List<dynamic>)[1] as List<dynamic>,
+                ).cast<MfmInline>(),
           );
         });
       },
@@ -377,21 +359,20 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmItalic(
-            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
-                .cast<MfmInline>(),
+            children:
+                mergeText(
+                  (result as List<dynamic>)[1] as List<dynamic>,
+                ).cast<MfmInline>(),
           );
         });
       },
       "italicAsta": () {
         final mark = str("*");
-        final parser = seq(
-          [
-            mark,
-            alt([alphaAndNum, space]).many(1),
-            mark,
-          ],
-          select: 1,
-        );
+        final parser = seq([
+          mark,
+          alt([alphaAndNum, space]).many(1),
+          mark,
+        ], select: 1);
         return Parser<MfmItalic>(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
@@ -412,14 +393,11 @@ class Language {
       },
       "italicUnder": () {
         final mark = str("_");
-        final parser = seq(
-          [
-            mark,
-            alt([alphaAndNum, space]).many(1),
-            mark,
-          ],
-          select: 1,
-        );
+        final parser = seq([
+          mark,
+          alt([alphaAndNum, space]).many(1),
+          mark,
+        ], select: 1);
 
         return Parser<MfmItalic>(
           handler: (input, index, state) {
@@ -452,8 +430,10 @@ class Language {
             return result;
           }
           return MfmStrike(
-            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
-                .cast<MfmInline>(),
+            children:
+                mergeText(
+                  (result as List<dynamic>)[1] as List<dynamic>,
+                ).cast<MfmInline>(),
           );
         });
       },
@@ -461,66 +441,58 @@ class Language {
         final mark = str("~~");
         return seqOrText([
           mark,
-          seq(
-            [
-              notMatch(alt([mark, newLine])),
-              nest(inline),
-            ],
-            select: 1,
-          ).many(1),
+          seq([
+            notMatch(alt([mark, newLine])),
+            nest(inline),
+          ], select: 1).many(1),
           mark,
         ]).map((result) {
           if (result is String) return result;
           return MfmStrike(
-            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
-                .cast<MfmInline>(),
+            children:
+                mergeText(
+                  (result as List<dynamic>)[1] as List<dynamic>,
+                ).cast<MfmInline>(),
           );
         });
       },
       "unicodeEmoji": () {
-        return regexp(twemojiParser)
-            .map((content) => MfmUnicodeEmoji(emoji: content));
+        return regexp(
+          twemojiParser,
+        ).map((content) => MfmUnicodeEmoji(emoji: content));
       },
       "emojiCode": () {
         final side = notMatch(regexp(RegExp("[a-zA-Z0-9]")));
         final mark = str(":");
-        return seq(
-          [
-            alt([lineBegin, side]),
-            mark,
-            regexp(RegExp("[a-zA-Z0-9_+-]+")),
-            mark,
-            alt([lineEnd, side]),
-          ],
-          select: 2,
-        ).map((name) => MfmEmojiCode(name: name as String));
+        return seq([
+          alt([lineBegin, side]),
+          mark,
+          regexp(RegExp("[a-zA-Z0-9_+-]+")),
+          mark,
+          alt([lineEnd, side]),
+        ], select: 2).map((name) => MfmEmojiCode(name: name as String));
       },
       "plainTag": () {
         final open = str("<plain>");
         final close = str("</plain>");
 
-        return seq(
-          [
-            open,
-            newLine.option(),
-            seq(
-              [
-                notMatch(seq([newLine.option(), close])),
-                char,
-              ],
-              select: 1,
-            ).many(1).text(),
-            newLine.option(),
-            close,
-          ],
-          select: 2,
-        ).map((result) => MfmPlain(text: result as String));
+        return seq([
+          open,
+          newLine.option(),
+          seq([
+            notMatch(seq([newLine.option(), close])),
+            char,
+          ], select: 1).many(1).text(),
+          newLine.option(),
+          close,
+        ], select: 2).map((result) => MfmPlain(text: result as String));
       },
       "fn": () {
         final fnName = Parser(
           handler: (input, index, state) {
-            final result =
-                regexp(RegExp("[a-zA-Z0-9_]+")).handler(input, index, state);
+            final result = regexp(
+              RegExp("[a-zA-Z0-9_]+"),
+            ).handler(input, index, state);
             if (result is! Success<String>) {
               return result;
             }
@@ -530,13 +502,10 @@ class Language {
 
         final arg = seq([
           regexp(RegExp("[a-zA-Z0-9_]+")),
-          seq(
-            [
-              str("="),
-              regexp(RegExp("[a-zA-Z0-9_.-]+")),
-            ],
-            select: 1,
-          ).option(),
+          seq([
+            str("="),
+            regexp(RegExp("[a-zA-Z0-9_.-]+")),
+          ], select: 1).option(),
         ]).map((result) {
           return (
             k: (result as List<dynamic>)[0] as String,
@@ -544,13 +513,9 @@ class Language {
           );
         });
 
-        final args = seq(
-          [
-            str("."),
-            arg.sep(str(","), 1),
-          ],
-          select: 1,
-        ).map((pairs) {
+        final args = seq([str("."), arg.sep(str(","), 1)], select: 1).map((
+          pairs,
+        ) {
           final result = <String, String>{};
           for (final pair in pairs as List<({String k, String v})>) {
             result[pair.k] = pair.v;
@@ -583,40 +548,28 @@ class Language {
       },
       "inlineCode": () {
         final mark = str("`");
-        return seq(
-          [
-            mark,
-            seq(
-              [
-                notMatch(alt([mark, str("´"), newLine])),
-                char,
-              ],
-              select: 1,
-            ).many(1),
-            mark,
-          ],
-          select: 1,
-        ).map(
+        return seq([
+          mark,
+          seq([
+            notMatch(alt([mark, str("´"), newLine])),
+            char,
+          ], select: 1).many(1),
+          mark,
+        ], select: 1).map(
           (result) => MfmInlineCode(code: (result as List<dynamic>).join()),
         );
       },
       "mathInline": () {
         final open = str(r"\(");
         final close = str(r"\)");
-        return seq(
-          [
-            open,
-            seq(
-              [
-                notMatch(alt([close, newLine])),
-                char,
-              ],
-              select: 1,
-            ).many(1),
-            close,
-          ],
-          select: 1,
-        ).map(
+        return seq([
+          open,
+          seq([
+            notMatch(alt([close, newLine])),
+            char,
+          ], select: 1).many(1),
+          close,
+        ], select: 1).map(
           (result) => MfmMathInline(formula: (result as List<dynamic>).join()),
         );
       },
@@ -625,13 +578,10 @@ class Language {
           notLinkLabel,
           str("@"),
           regexp(RegExp("[a-zA-Z0-9_.-]+")),
-          seq(
-            [
-              str("@"),
-              regexp(RegExp("[a-zA-Z0-9_.-]+")),
-            ],
-            select: 1,
-          ).option(),
+          seq([
+            str("@"),
+            regexp(RegExp("[a-zA-Z0-9_.-]+")),
+          ], select: 1).option(),
         ]);
 
         return Parser(
@@ -686,9 +636,10 @@ class Language {
             if (invalidMention) {
               return success(resultIndex, input.slice(index, resultIndex));
             }
-            final acct = modifiedHost != null
-                ? "@$modifiedName@$modifiedHost"
-                : "@$modifiedName";
+            final acct =
+                modifiedHost != null
+                    ? "@$modifiedName@$modifiedHost"
+                    : "@$modifiedName";
             return success(
               index + acct.length,
               MfmMention(
@@ -702,19 +653,16 @@ class Language {
       },
       "hashtag": () {
         final mark = str("#");
-        final hashTagChar = seq(
-          [
-            notMatch(
-              alt([
-                regexp(RegExp(r"""[ \u3000\t.,!?'"#:/[\]【】()「」（）<>]""")),
-                space,
-                newLine,
-              ]),
-            ),
-            char,
-          ],
-          select: 1,
-        );
+        final hashTagChar = seq([
+          notMatch(
+            alt([
+              regexp(RegExp(r"""[ \u3000\t.,!?'"#:/[\]【】()「」（）<>]""")),
+              space,
+              newLine,
+            ]),
+          ),
+          char,
+        ], select: 1);
         Parser<dynamic>? innerItem;
         innerItem = lazy(
           () => alt([
@@ -741,14 +689,11 @@ class Language {
             hashTagChar,
           ]),
         );
-        final parser = seq(
-          [
-            notLinkLabel,
-            mark,
-            innerItem.many(1).text(),
-          ],
-          select: 2,
-        );
+        final parser = seq([
+          notLinkLabel,
+          mark,
+          innerItem.many(1).text(),
+        ], select: 2);
         return Parser(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
@@ -791,13 +736,10 @@ class Language {
         return seq([
           notLinkLabel,
           alt([str('?['), str('[')]),
-          seq(
-            [
-              notMatch(alt([closeLabel, newLine])),
-              nest(labelInline),
-            ],
-            select: 1,
-          ).many(1),
+          seq([
+            notMatch(alt([closeLabel, newLine])),
+            nest(labelInline),
+          ], select: 1).many(1),
           closeLabel,
           str('('),
           alt([urlAlt, urlNoFallback]),
@@ -842,10 +784,7 @@ class Language {
             if (result is! Success) {
               return failure();
             }
-            final Success(
-              :List<dynamic> value,
-              index: resultIndex,
-            ) = result;
+            final Success(:List<dynamic> value, index: resultIndex) = result;
             var modifiedIndex = resultIndex;
             final schema = value[1] as String;
             var content = value[2] as String;
@@ -860,10 +799,7 @@ class Language {
             }
             return success(
               modifiedIndex,
-              MfmUrl(
-                url: "$schema$content",
-                brackets: false,
-              ),
+              MfmUrl(url: "$schema$content", brackets: false),
             );
           },
         );
@@ -871,19 +807,17 @@ class Language {
       "urlAlt": () {
         final open = str('<');
         final close = str('>');
-        final parser = seq([
-          notLinkLabel,
-          open,
-          regexp(RegExp("https?://")),
-          seq(
-            [
-              notMatch(alt([close, space])),
-              char,
-            ],
-            select: 1,
-          ).many(1),
-          close,
-        ]).text();
+        final parser =
+            seq([
+              notLinkLabel,
+              open,
+              regexp(RegExp("https?://")),
+              seq([
+                notMatch(alt([close, space])),
+                char,
+              ], select: 1).many(1),
+              close,
+            ]).text();
         return Parser<MfmUrl>(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);
@@ -891,13 +825,7 @@ class Language {
               return failure();
             }
             final text = result.value.slice(1, result.value.length - 1);
-            return success(
-              result.index,
-              MfmUrl(
-                url: text,
-                brackets: true,
-              ),
-            );
+            return success(result.index, MfmUrl(url: text, brackets: true));
           },
         );
       },
@@ -910,18 +838,15 @@ class Language {
         return seq([
           newLine.option(),
           lineBegin,
-          seq(
-            [
-              notMatch(
-                alt([
-                  newLine,
-                  seq([space, button, lineEnd]),
-                ]),
-              ),
-              char,
-            ],
-            select: 1,
-          ).many(1),
+          seq([
+            notMatch(
+              alt([
+                newLine,
+                seq([space, button, lineEnd]),
+              ]),
+            ),
+            char,
+          ], select: 1).many(1),
           space,
           button,
           lineEnd,

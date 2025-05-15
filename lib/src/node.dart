@@ -29,10 +29,8 @@ class MfmQuote extends MfmBlock {
   }
 
   @override
-  int get hashCode => Object.hash(
-        runtimeType,
-        const DeepCollectionEquality().hash(children),
-      );
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(children));
 }
 
 /// Search Node
@@ -41,10 +39,7 @@ class MfmSearch extends MfmBlock {
   final String query;
   final String content;
 
-  const MfmSearch({
-    required this.query,
-    required this.content,
-  });
+  const MfmSearch({required this.query, required this.content});
 
   @override
   bool operator ==(Object other) {
@@ -64,10 +59,7 @@ class MfmCodeBlock extends MfmBlock {
   final String code;
   final String? lang;
 
-  const MfmCodeBlock({
-    required this.code,
-    this.lang,
-  });
+  const MfmCodeBlock({required this.code, this.lang});
 
   @override
   bool operator ==(Object other) {
@@ -112,10 +104,8 @@ class MfmCenter extends MfmBlock {
   }
 
   @override
-  int get hashCode => Object.hash(
-        runtimeType,
-        const DeepCollectionEquality().hash(children),
-      );
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(children));
 }
 
 /// Unicode Emoji Node
@@ -151,10 +141,8 @@ class MfmEmojiCode extends MfmInline {
   }
 
   @override
-  int get hashCode => Object.hash(
-        runtimeType,
-        const DeepCollectionEquality().hash(children),
-      );
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(children));
 }
 
 /// Bold Element Node
@@ -170,10 +158,8 @@ class MfmBold extends MfmInline {
   }
 
   @override
-  int get hashCode => Object.hash(
-        runtimeType,
-        const DeepCollectionEquality().hash(children),
-      );
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(children));
 }
 
 /// Small Element Node
@@ -189,10 +175,8 @@ class MfmSmall extends MfmInline {
   }
 
   @override
-  int get hashCode => Object.hash(
-        runtimeType,
-        const DeepCollectionEquality().hash(children),
-      );
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(children));
 }
 
 /// Italic Element Node
@@ -208,10 +192,8 @@ class MfmItalic extends MfmInline {
   }
 
   @override
-  int get hashCode => Object.hash(
-        runtimeType,
-        const DeepCollectionEquality().hash(children),
-      );
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(children));
 }
 
 /// Strike Element Node
@@ -227,10 +209,8 @@ class MfmStrike extends MfmInline {
   }
 
   @override
-  int get hashCode => Object.hash(
-        runtimeType,
-        const DeepCollectionEquality().hash(children),
-      );
+  int get hashCode =>
+      Object.hash(runtimeType, const DeepCollectionEquality().hash(children));
 }
 
 /// Plain Element Node
@@ -261,11 +241,7 @@ class MfmFn extends MfmInline {
   final String name;
   final Map<String, String> args;
 
-  const MfmFn({
-    required this.name,
-    required this.args,
-    super.children,
-  });
+  const MfmFn({required this.name, required this.args, super.children});
 
   @override
   bool operator ==(Object other) {
@@ -279,11 +255,11 @@ class MfmFn extends MfmInline {
 
   @override
   int get hashCode => Object.hash(
-        runtimeType,
-        name,
-        const DeepCollectionEquality().hash(args),
-        const DeepCollectionEquality().hash(children),
-      );
+    runtimeType,
+    name,
+    const DeepCollectionEquality().hash(args),
+    const DeepCollectionEquality().hash(children),
+  );
 }
 
 /// Inline Code Node
@@ -349,11 +325,7 @@ class MfmMention extends MfmInline {
   final String? host;
   final String acct;
 
-  const MfmMention({
-    required this.username,
-    this.host,
-    required this.acct,
-  });
+  const MfmMention({required this.username, this.host, required this.acct});
 
   @override
   bool operator ==(Object other) {
@@ -395,11 +367,7 @@ class MfmLink extends MfmInline {
   final String url;
   final bool silent;
 
-  const MfmLink({
-    required this.silent,
-    required this.url,
-    super.children,
-  });
+  const MfmLink({required this.silent, required this.url, super.children});
 
   @override
   bool operator ==(Object other) {
@@ -421,10 +389,7 @@ class MfmUrl extends MfmInline {
   final String url;
   final bool? brackets;
 
-  const MfmUrl({
-    required this.url,
-    this.brackets,
-  });
+  const MfmUrl({required this.url, this.brackets});
 
   @override
   bool operator ==(Object other) {

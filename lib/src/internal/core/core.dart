@@ -2,10 +2,7 @@ import 'package:mfm_parser/src/internal/extension/string_extension.dart';
 import 'package:mfm_parser/src/mfm_parser.dart';
 
 class Success<T> implements Result<T> {
-  const Success({
-    required this.value,
-    required this.index,
-  });
+  const Success({required this.value, required this.index});
 
   final T value;
   final int index;
@@ -15,11 +12,8 @@ class Failure<T> implements Result<T> {}
 
 sealed class Result<T> {}
 
-typedef ParserHandler<T> = Result<T> Function(
-  String input,
-  int index,
-  FullParserOpts state,
-);
+typedef ParserHandler<T> =
+    Result<T> Function(String input, int index, FullParserOpts state);
 
 Success<T> success<T>(int index, T value) =>
     Success<T>(value: value, index: index);
@@ -58,7 +52,7 @@ class Parser<T> {
         final result = handler(input, index, state);
         return switch (result) {
           Success(:final value, :final index) => success(index, fn(value)),
-          Failure() => failure()
+          Failure() => failure(),
         };
       },
     );
@@ -69,8 +63,10 @@ class Parser<T> {
       handler: (input, index, state) {
         final result = handler(input, index, state);
         return switch (result) {
-          Success(index: final resultIndex) =>
-            success(resultIndex, input.substring(index, resultIndex)),
+          Success(index: final resultIndex) => success(
+            resultIndex,
+            input.substring(index, resultIndex),
+          ),
           Failure() => failure(),
         };
       },
@@ -105,13 +101,7 @@ class Parser<T> {
 
     return seq([
       this,
-      seq(
-        [
-          separator,
-          this,
-        ],
-        select: 1,
-      ).many(min - 1),
+      seq([separator, this], select: 1).many(min - 1),
     ]).map(
       (result) => <T>[
         (result as List)[0] as T,
@@ -121,10 +111,7 @@ class Parser<T> {
   }
 
   Parser<T?> option() {
-    return alt([
-      this,
-      succeeded(null),
-    ]);
+    return alt([this, succeeded(null)]);
   }
 }
 
