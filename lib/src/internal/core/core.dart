@@ -186,7 +186,7 @@ Parser<T> alt<T>(List<Parser<T>> parsers) {
 
 Parser<T> succeeded<T>(T value) {
   return Parser(
-    handler: (_, index, __) {
+    handler: (_, index, _) {
       return success(index, value);
     },
   );
