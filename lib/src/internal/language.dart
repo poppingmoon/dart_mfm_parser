@@ -96,62 +96,60 @@ class Language {
 
   Language() {
     _l = createLanguage({
-      "full":
-          () => alt([
-            unicodeEmoji,
-            centerTag,
-            smallTag,
-            plainTag,
-            boldTag,
-            italicTag,
-            strikeTag,
-            urlAlt,
-            big,
-            boldAsta,
-            italicAsta,
-            boldUnder,
-            italicUnder,
-            codeBlock,
-            inlineCode,
-            quote,
-            mathBlock,
-            mathInline,
-            strikeWave,
-            fn,
-            mention,
-            hashTag,
-            emojiCode,
-            link,
-            url,
-            search,
-            text,
-          ]),
+      "full": () => alt([
+        unicodeEmoji,
+        centerTag,
+        smallTag,
+        plainTag,
+        boldTag,
+        italicTag,
+        strikeTag,
+        urlAlt,
+        big,
+        boldAsta,
+        italicAsta,
+        boldUnder,
+        italicUnder,
+        codeBlock,
+        inlineCode,
+        quote,
+        mathBlock,
+        mathInline,
+        strikeWave,
+        fn,
+        mention,
+        hashTag,
+        emojiCode,
+        link,
+        url,
+        search,
+        text,
+      ]),
       "simple": () => alt([unicodeEmoji, emojiCode, plainTag, text]),
-      "inline":
-          () => alt([
-            unicodeEmoji,
-            smallTag,
-            plainTag,
-            boldTag,
-            italicTag,
-            strikeTag,
-            urlAlt,
-            big,
-            boldAsta,
-            italicAsta,
-            boldUnder,
-            italicUnder,
-            inlineCode,
-            mathInline,
-            strikeWave,
-            fn,
-            mention,
-            hashTag,
-            emojiCode,
-            link,
-            url,
-            text,
-          ]),
+      "inline": () => alt([
+        unicodeEmoji,
+        smallTag,
+        plainTag,
+        boldTag,
+        italicTag,
+        strikeTag,
+        urlAlt,
+        big,
+        boldAsta,
+        italicAsta,
+        boldUnder,
+        italicUnder,
+        inlineCode,
+        mathInline,
+        strikeWave,
+        fn,
+        mention,
+        hashTag,
+        emojiCode,
+        link,
+        url,
+        text,
+      ]),
       "quote": () {
         final lines = seq([
           str(">"),
@@ -217,8 +215,9 @@ class Language {
           lineEnd,
           newLine.option(),
         ]).map((result) {
-          final lang =
-              ((result as List<dynamic>)[3] as List<dynamic>).join().trim();
+          final lang = ((result as List<dynamic>)[3] as List<dynamic>)
+              .join()
+              .trim();
           final code = (result[5] as List<dynamic>).join();
 
           return MfmCodeBlock(code: code, lang: lang.isNotEmpty ? lang : null);
@@ -295,10 +294,9 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmBold(
-            children:
-                mergeText(
-                  (result as List<dynamic>)[1] as List<dynamic>,
-                ).cast<MfmInline>(),
+            children: mergeText(
+              (result as List<dynamic>)[1] as List<dynamic>,
+            ).cast<MfmInline>(),
           );
         });
       },
@@ -313,10 +311,9 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmBold(
-            children:
-                mergeText(
-                  (result as List<dynamic>)[1] as List<dynamic>,
-                ).cast<MfmInline>(),
+            children: mergeText(
+              (result as List<dynamic>)[1] as List<dynamic>,
+            ).cast<MfmInline>(),
           );
         });
       },
@@ -342,10 +339,9 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmSmall(
-            children:
-                mergeText(
-                  (result as List<dynamic>)[1] as List<dynamic>,
-                ).cast<MfmInline>(),
+            children: mergeText(
+              (result as List<dynamic>)[1] as List<dynamic>,
+            ).cast<MfmInline>(),
           );
         });
       },
@@ -359,10 +355,9 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmItalic(
-            children:
-                mergeText(
-                  (result as List<dynamic>)[1] as List<dynamic>,
-                ).cast<MfmInline>(),
+            children: mergeText(
+              (result as List<dynamic>)[1] as List<dynamic>,
+            ).cast<MfmInline>(),
           );
         });
       },
@@ -430,10 +425,9 @@ class Language {
             return result;
           }
           return MfmStrike(
-            children:
-                mergeText(
-                  (result as List<dynamic>)[1] as List<dynamic>,
-                ).cast<MfmInline>(),
+            children: mergeText(
+              (result as List<dynamic>)[1] as List<dynamic>,
+            ).cast<MfmInline>(),
           );
         });
       },
@@ -449,10 +443,9 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmStrike(
-            children:
-                mergeText(
-                  (result as List<dynamic>)[1] as List<dynamic>,
-                ).cast<MfmInline>(),
+            children: mergeText(
+              (result as List<dynamic>)[1] as List<dynamic>,
+            ).cast<MfmInline>(),
           );
         });
       },
@@ -500,18 +493,19 @@ class Language {
           },
         );
 
-        final arg = seq([
-          regexp(RegExp("[a-zA-Z0-9_]+")),
-          seq([
-            str("="),
-            regexp(RegExp("[a-zA-Z0-9_.-]+")),
-          ], select: 1).option(),
-        ]).map((result) {
-          return (
-            k: (result as List<dynamic>)[0] as String,
-            v: (result[1] != null) ? result[1] as String : "",
-          );
-        });
+        final arg =
+            seq([
+              regexp(RegExp("[a-zA-Z0-9_]+")),
+              seq([
+                str("="),
+                regexp(RegExp("[a-zA-Z0-9_.-]+")),
+              ], select: 1).option(),
+            ]).map((result) {
+              return (
+                k: (result as List<dynamic>)[0] as String,
+                v: (result[1] != null) ? result[1] as String : "",
+              );
+            });
 
         final args = seq([str("."), arg.sep(str(","), 1)], select: 1).map((
           pairs,
@@ -636,10 +630,9 @@ class Language {
             if (invalidMention) {
               return success(resultIndex, input.slice(index, resultIndex));
             }
-            final acct =
-                modifiedHost != null
-                    ? "@$modifiedName@$modifiedHost"
-                    : "@$modifiedName";
+            final acct = modifiedHost != null
+                ? "@$modifiedName@$modifiedHost"
+                : "@$modifiedName";
             return success(
               index + acct.length,
               MfmMention(
@@ -807,17 +800,16 @@ class Language {
       "urlAlt": () {
         final open = str('<');
         final close = str('>');
-        final parser =
-            seq([
-              notLinkLabel,
-              open,
-              regexp(RegExp("https?://")),
-              seq([
-                notMatch(alt([close, space])),
-                char,
-              ], select: 1).many(1),
-              close,
-            ]).text();
+        final parser = seq([
+          notLinkLabel,
+          open,
+          regexp(RegExp("https?://")),
+          seq([
+            notMatch(alt([close, space])),
+            char,
+          ], select: 1).many(1),
+          close,
+        ]).text();
         return Parser<MfmUrl>(
           handler: (input, index, state) {
             final result = parser.handler(input, index, state);

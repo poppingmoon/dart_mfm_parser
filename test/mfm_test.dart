@@ -415,7 +415,11 @@ hoge""";
       test("basic", () {
         const input = "***abc***";
         final output = [
-          const MfmFn(name: "tada", args: {}, children: [MfmText(text: "abc")]),
+          const MfmFn(
+            name: "tada",
+            args: {},
+            children: [MfmText(text: "abc")],
+          ),
         ];
 
         expect(parse(input), orderedEquals(output));
@@ -1454,7 +1458,11 @@ hoge""";
       test("basic", () {
         const input = r"$[tada abc]";
         final output = [
-          const MfmFn(name: "tada", args: {}, children: [MfmText(text: "abc")]),
+          const MfmFn(
+            name: "tada",
+            args: {},
+            children: [MfmText(text: "abc")],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1496,7 +1504,11 @@ hoge""";
             name: "spin",
             args: {"speed": "1.1s"},
             children: [
-              MfmFn(name: "shake", args: {}, children: [MfmText(text: "a")]),
+              MfmFn(
+                name: "shake",
+                args: {},
+                children: [MfmText(text: "a")],
+              ),
             ],
           ),
         ];
@@ -1652,7 +1664,10 @@ hoge""";
           const input2 = "<b>#abc(x(y)z)</b>";
           final output2 = [
             const MfmBold(
-              children: [MfmHashtag(hashtag: "abc"), MfmText(text: "(x(y)z)")],
+              children: [
+                MfmHashtag(hashtag: "abc"),
+                MfmText(text: "(x(y)z)"),
+              ],
             ),
           ];
           expect(parse(input2, nestLimit: 2), output2);
