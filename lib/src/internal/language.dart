@@ -450,9 +450,10 @@ class Language {
         });
       },
       "unicodeEmoji": () {
-        return regexp(
-          twemojiParser,
-        ).map((content) => MfmUnicodeEmoji(emoji: content));
+        return regexp(twemojiParser).map(
+          (content) =>
+              content == "\uFE0F" ? content : MfmUnicodeEmoji(emoji: content),
+        );
       },
       "emojiCode": () {
         final side = notMatch(regexp(RegExp("[a-zA-Z0-9]")));

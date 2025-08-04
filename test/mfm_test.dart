@@ -65,6 +65,12 @@ void main() {
         final output = [MfmPlain(text: ":foo:")];
         expect(mfm_parser.parseSimple(input), orderedEquals(output));
       });
+
+      test("ignore variation selecter", () {
+        const input = "\uFE0F";
+        final output = [const MfmText(text: "\uFE0F")];
+        expect(mfm_parser.parseSimple(input), orderedEquals(output));
+      });
     });
 
     test("disallow other syntaxes", () {
