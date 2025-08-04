@@ -901,6 +901,12 @@ hoge""";
         expect(parse(input), orderedEquals(output));
       });
 
+      test("disallow `.` in head of username", () {
+        const input = "@.abc";
+        final output = [const MfmText(text: "@.abc")];
+        expect(parse(input), orderedEquals(output));
+      });
+
       test("disallow `.` in tail of username", () {
         const input = "@abc.";
         final output = [
