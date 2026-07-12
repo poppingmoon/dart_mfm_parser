@@ -284,7 +284,23 @@ class Language {
           );
         });
       },
-      "text": () => char,
+      "text": () {
+        return alt([
+          Parser<String>(
+            handler: (input, index, _) {
+              var i = index;
+              while (i < input.length && isPlainChar(input.codeUnitAt(i))) {
+                i++;
+              }
+              if (i == index) {
+                return failure();
+              }
+              return success(i, input.substring(index, i));
+            },
+          ),
+          char,
+        ]);
+      },
       "boldAsta": () {
         final mark = str("**");
         return seqOrText([
