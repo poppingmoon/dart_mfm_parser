@@ -1,5 +1,3 @@
-import 'dart:math';
-
 extension StringExtension on String {
   String slice(int start, int end) {
     final realStart = start < 0 ? length + start : start;
@@ -7,7 +5,4 @@ extension StringExtension on String {
 
     return substring(realStart, realEnd);
   }
-
-  String substr(int start, int length) =>
-      substring(start, min(start + length, this.length));
 }
