@@ -448,7 +448,15 @@ class Language {
         });
       },
       "unicodeEmoji": () {
-        return regexp(twemojiParser).map(
+        return Parser<String>(
+          handler: (input, index, state) {
+            final code = input.codeUnitAt(index);
+            if (!mayBeEmojiStart(code)) {
+              return failure();
+            }
+            return regexp(twemojiParser).handler(input, index, state);
+          },
+        ).map(
           (content) =>
               content == "\uFE0F" ? content : MfmUnicodeEmoji(emoji: content),
         );
