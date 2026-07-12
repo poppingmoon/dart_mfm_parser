@@ -1,5 +1,18 @@
 import 'package:mfm_parser/src/node.dart';
 
+const _digit0Code = 0x30; // '0'
+const _digit9Code = 0x39; // '9'
+const _upperACode = 0x41; // 'A'
+const _upperZCode = 0x5a; // 'Z'
+const _lowerACode = 0x61; // 'a'
+const _lowerZCode = 0x7a; // 'z'
+
+bool isAlphanumeric(int code) {
+  return (_digit0Code <= code && code <= _digit9Code) ||
+      (_upperACode <= code && code <= _upperZCode) ||
+      (_lowerACode <= code && code <= _lowerZCode);
+}
+
 List<MfmNode> mergeText(List<dynamic> nodes) {
   final List<MfmNode> dest = <MfmNode>[];
   final List<String> storedChars = <String>[];

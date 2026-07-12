@@ -374,8 +374,7 @@ class Language {
             if (result is! Success) {
               return failure();
             }
-            final beforeStr = input.slice(0, index);
-            if (RegExp(r"[a-zA-Z0-9]$").hasMatch(beforeStr)) {
+            if (index > 0 && isAlphanumeric(input.codeUnitAt(index - 1))) {
               return failure();
             }
             final Success(:List<String> value, index: resultIndex) = result;
@@ -400,8 +399,7 @@ class Language {
             if (result is! Success) {
               return failure();
             }
-            final beforeStr = input.slice(0, index);
-            if (RegExp(r"[a-zA-Z0-9]$").hasMatch(beforeStr)) {
+            if (index > 0 && isAlphanumeric(input.codeUnitAt(index - 1))) {
               return failure();
             }
             final Success(:List<String> value, index: resultIndex) = result;
@@ -586,8 +584,9 @@ class Language {
               return failure();
             }
 
-            final beforeStr = input.slice(0, index);
-            if (RegExp(r"[a-zA-Z0-9]$").hasMatch(beforeStr)) return failure();
+            if (index > 0 && isAlphanumeric(input.codeUnitAt(index - 1))) {
+              return failure();
+            }
 
             var invalidMention = false;
             final Success(:List<dynamic> value, index: resultIndex) = result;
@@ -695,8 +694,7 @@ class Language {
               return failure();
             }
             // check before
-            final beforeStr = input.slice(0, index);
-            if (RegExp(r"[a-zA-Z0-9]$").hasMatch(beforeStr)) {
+            if (index > 0 && isAlphanumeric(input.codeUnitAt(index - 1))) {
               return failure();
             }
             final Success(:String value, index: resultIndex) = result;
