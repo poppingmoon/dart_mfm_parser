@@ -1,4 +1,3 @@
-import 'package:mfm_parser/src/internal/extension/string_extension.dart';
 import 'package:mfm_parser/src/mfm_parser.dart';
 
 class Success<T> extends Result<T> {
@@ -122,10 +121,7 @@ class Parser<T> {
 
 Parser<T> str<T extends String>(T value) {
   return Parser(handler: (input, index, _) {
-    if ((input.length - index) < value.length) {
-      return failure<T>();
-    }
-    if (input.substr(index, value.length) != value) {
+    if (!input.startsWith(value, index)) {
       return failure();
     }
 
