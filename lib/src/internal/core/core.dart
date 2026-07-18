@@ -134,11 +134,8 @@ Parser<T> str<T extends String>(T value) {
 }
 
 Parser<String> regexp<T extends RegExp>(T pattern) {
-  final re = RegExp('^(?:${pattern.pattern})');
-
   return Parser(handler: (input, index, _) {
-    final text = input.substring(index);
-    final result = re.firstMatch(text);
+    final result = pattern.matchAsPrefix(input, index);
 
     if (result == null) {
       return failure();
