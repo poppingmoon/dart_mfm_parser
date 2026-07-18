@@ -1,4 +1,9 @@
 
+## 1.0.7
+
+- support Unicode emoji additions (17.0) (commits: 8e8ecb2, b38a872, 670c1a8)
+- improve parser performance by avoiding substring allocations in `str` and `regexp` (commits: 8ff6fa4, d69cef9)
+
 ## 1.0.6
 
 - include `plain` in `parseSimple` (commit: 89350da, 2024-06-18)
