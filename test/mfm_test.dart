@@ -1464,6 +1464,63 @@ hoge""";
         final output = [const MfmText(text: "[test](http://..)")];
         expect(parse(input), orderedEquals(output));
       });
+
+      test('with unclosed brackets before', () {
+        const input = "[[[foo] [bar](https://example.com)";
+        final output = [
+          const MfmText(text: "[[[foo] "),
+          const MfmLink(
+            silent: false,
+            url: "https://example.com",
+            children: [MfmText(text: "bar")],
+          ),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test('with unclosed brackets in label', () {
+        const input = "[[[foo](https://example.com)";
+        final output = [
+          const MfmLink(
+            silent: false,
+            url: "https://example.com",
+            children: [MfmText(text: "[[foo")],
+          ),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test('with unclosed brackets in previous line', () {
+        const input = "[[foo\n?[[bar](https://example.com)";
+        final output = [
+          const MfmText(text: "[[foo\n"),
+          const MfmLink(
+            silent: true,
+            url: "https://example.com",
+            children: [MfmText(text: "[bar")],
+          ),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test('with unclosed brackets in bold', () {
+        const input = "**[[foo** [[bar** **[baz](https://example.com)**";
+        final output = [
+          const MfmBold(children: [MfmText(text: "[[foo")]),
+          const MfmText(text: " "),
+          const MfmLink(
+            silent: false,
+            url: "https://example.com",
+            children: [
+              MfmText(text: "[bar"),
+              MfmBold(children: [MfmText(text: " ")]),
+              MfmText(text: "[baz"),
+            ],
+          ),
+          const MfmText(text: "**"),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("fn", () {
