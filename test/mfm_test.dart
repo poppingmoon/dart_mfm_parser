@@ -287,6 +287,26 @@ hoge""";
 
         expect(parse(input), orderedEquals(output));
       });
+
+      test("with CRLF line breaks", () {
+        final input = "abc\r\n```js\r\nconst abc = 1;\r\n```\r\n123";
+        final output = [
+          MfmText("abc"),
+          MfmCodeBlock("const abc = 1;", "js"),
+          MfmText("123"),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with CR line breaks", () {
+        final input = "abc\r```js\rconst abc = 1;\r```\r123";
+        final output = [
+          MfmText("abc"),
+          MfmCodeBlock("const abc = 1;", "js"),
+          MfmText("123"),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("mathBlock", () {
@@ -438,6 +458,12 @@ hoge""";
         ];
         expect(parse(input), orderedEquals(output));
       });
+
+      test("ignore unclosed syntax", () {
+        final input = "***abc";
+        final output = [MfmText("***abc")];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("bold tag", () {
@@ -471,6 +497,12 @@ hoge""";
         ];
         expect(parse(input), orderedEquals(output));
       });
+
+      test("ignore unclosed syntax", () {
+        final input = "<b>abc";
+        final output = [MfmText("<b>abc")];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("bold", () {
@@ -501,6 +533,28 @@ hoge""";
             MfmText("\n123")
           ])
         ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with underscores", () {
+        final input = "__abc__";
+        final output = [
+          MfmBold([MfmText("abc")]),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with underscores (space allowed)", () {
+        final input = "__a b__";
+        final output = [
+          MfmBold([MfmText("a b")]),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with underscores (only alphanumeric and space allowed)", () {
+        final input = "__a*b__";
+        final output = [MfmText("__a*b__")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -537,6 +591,12 @@ hoge""";
         ];
         expect(parse(input), orderedEquals(output));
       });
+
+      test("ignore unclosed syntax", () {
+        final input = "<small>abc";
+        final output = [MfmText("<small>abc")];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("italic tag", () {
@@ -567,6 +627,12 @@ hoge""";
             MfmText("\nabc")
           ])
         ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("ignore unclosed syntax", () {
+        final input = "<i>abc";
+        final output = [MfmText("<i>abc")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -648,6 +714,12 @@ hoge""";
         ];
         expect(parse(input), orderedEquals(output));
       });
+
+      test("ignore unclosed syntax", () {
+        final input = "<s>abc";
+        final output = [MfmText("<s>abc")];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("strike", () {
@@ -656,6 +728,18 @@ hoge""";
         final output = [
           MfmStrike([MfmText("foo")])
         ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("ignore unclosed syntax", () {
+        final input = "~~abc";
+        final output = [MfmText("~~abc")];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("disallow line break", () {
+        final input = "~~abc\ndef~~";
+        final output = [MfmText("~~abc\ndef~~")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -841,6 +925,18 @@ hoge""";
       test("disallow `-` in tail of username", () {
         final input = "@abc@aaa-";
         final output = [MfmMention("abc", "aaa", "@abc@aaa"), MfmText("-")];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("disallow `-` in tail of username with hostname", () {
+        final input = "@abc-@misskey.io";
+        final output = [MfmText("@abc-@misskey.io")];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("disallow `.` in tail of username with hostname", () {
+        final input = "@abc.@misskey.io";
+        final output = [MfmText("@abc.@misskey.io")];
         expect(parse(input), orderedEquals(output));
       });
     });
