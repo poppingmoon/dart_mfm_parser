@@ -4,9 +4,41 @@ import 'package:mfm_parser/src/internal/twemoji_parser.dart';
 import 'package:mfm_parser/src/internal/utils.dart';
 import 'package:mfm_parser/src/node.dart';
 
-final space = regexp(RegExp(r"[\u0020\u3000\t]"));
-final alphaAndNum = regexp(RegExp("[a-zA-Z0-9]"));
-final newLine = alt([crlf, cr, lf]);
+final space = Parser<String>(
+  handler: (input, index, _) {
+    if (index < input.length && isSpace(input.codeUnitAt(index))) {
+      return success(index + 1, input[index]);
+    }
+    return failure();
+  },
+);
+
+final alphaAndNum = Parser<String>(
+  handler: (input, index, _) {
+    if (index < input.length && isAlphanumeric(input.codeUnitAt(index))) {
+      return success(index + 1, input[index]);
+    }
+    return failure();
+  },
+);
+
+final newLine = Parser<String>(
+  handler: (input, index, _) {
+    if (index < input.length) {
+      final code = input.codeUnitAt(index);
+      if (code == crCode) {
+        if (index + 1 < input.length && input.codeUnitAt(index + 1) == lfCode) {
+          return success(index + 2, '\r\n');
+        } else {
+          return success(index + 1, '\r');
+        }
+      } else if (code == lfCode) {
+        return success(index + 1, '\n');
+      }
+    }
+    return failure();
+  },
+);
 
 Parser<dynamic> seqOrText(List<Parser<dynamic>> parsers) {
   return Parser(
@@ -496,7 +528,7 @@ class Language {
         );
       },
       "emojiCode": () {
-        final side = notMatch(regexp(RegExp("[a-zA-Z0-9]")));
+        final side = notMatch(alphaAndNum);
         final mark = str(":");
         return seq([
           alt([lineBegin, side]),
@@ -675,16 +707,15 @@ class Language {
       },
       "hashtag": () {
         final mark = str("#");
-        final hashTagChar = seq([
-          notMatch(
-            alt([
-              regexp(RegExp(r"""[ \u3000\t.,!?'"#:/[\]【】()「」（）<>]""")),
-              space,
-              newLine,
-            ]),
-          ),
-          char,
-        ], select: 1);
+        final hashTagChar = Parser<String>(
+          handler: (input, index, _) {
+            if (index < input.length &&
+                isHashtagChar(input.codeUnitAt(index))) {
+              return success(index + 1, input[index]);
+            }
+            return failure();
+          },
+        );
         Parser<dynamic>? innerItem;
         innerItem = lazy(
           () => alt([
@@ -792,13 +823,20 @@ class Language {
         );
       },
       "url": () {
-        final urlChar = regexp(RegExp(r"""[.,a-zA-Z0-9_/:%#@$&?!~=+-]"""));
-        Parser<dynamic>? innerItem;
+        final urlChar = Parser<String>(
+          handler: (input, index, _) {
+            if (index < input.length && isUrlChar(input.codeUnitAt(index))) {
+              return success(index + 1, input[index]);
+            }
+            return failure();
+          },
+        );
+        late final Parser<dynamic> innerItem;
         innerItem = lazy(
           () => alt([
             seq([
               str('('),
-              nest(innerItem!, fallback: urlChar).many(0),
+              nest(innerItem, fallback: urlChar).many(0),
               str(')'),
             ]),
             seq([

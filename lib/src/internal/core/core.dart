@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:mfm_parser/src/internal/utils.dart';
 import 'package:mfm_parser/src/mfm_parser.dart';
 
 class Success<T> implements Result<T> {
@@ -307,10 +308,6 @@ Parser<ManyThenItems<T, U>> manyThen<T, U>(
   );
 }
 
-final cr = str("\r");
-final lf = str("\n");
-final crlf = str("\r\n");
-final newline = alt([crlf, cr, lf]);
 final char = Parser<String>(
   handler: (input, index, _) {
     if ((input.length - index) < 1) {
@@ -326,10 +323,7 @@ final lineBegin = Parser<void>(
     if (index == 0) {
       return success(index, null);
     }
-    if (cr.handler(input, index - 1, state) is Success) {
-      return success(index, null);
-    }
-    if (lf.handler(input, index - 1, state) is Success) {
+    if (isNewLine(input.codeUnitAt(index - 1))) {
       return success(index, null);
     }
     return failure();
@@ -341,10 +335,7 @@ final lineEnd = Parser<void>(
     if (index == input.length) {
       return success(index, null);
     }
-    if (cr.handler(input, index, state) is Success) {
-      return success(index, null);
-    }
-    if (lf.handler(input, index, state) is Success) {
+    if (isNewLine(input.codeUnitAt(index))) {
       return success(index, null);
     }
     return failure();

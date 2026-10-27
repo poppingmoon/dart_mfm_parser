@@ -1,35 +1,52 @@
 import 'package:mfm_parser/src/node.dart';
 
-const _lfCode = 0x0a; // '\n'
-const _crCode = 0x0d; // '\r'
+const _tabCode = 0x09; // '\t'
+const lfCode = 0x0A; // '\n'
+const crCode = 0x0D; // '\r'
+const _spaceCode = 0x20; // ' '
+const _exclamationMarkCode = 0x21; // '!'
+const _doubleQuoteCode = 0x22; // '"'
 const _hashCode = 0x23; // '#'
 const _dollarCode = 0x24; // '$'
+const _percentCode = 0x25; // '%'
+const _andCode = 0x26; // '&'
+const _singleQuoteCode = 0x27; // '''
 const _parenOpenCode = 0x28; // '('
 const _parenCloseCode = 0x29; // ')'
-const _asteriskCode = 0x2a; // '*'
+const _asteriskCode = 0x2A; // '*'
+const _plusCode = 0x2B; // '+'
+const _commaCode = 0x2C; // ','
+const _periodCode = 0x2E; // '.'
+const _slashCode = 0x2F; // '/'
 const _digit0Code = 0x30; // '0'
 const _digit9Code = 0x39; // '9'
-const _colonCode = 0x3a; // ':'
-const _ltCode = 0x3c; // '<'
-const _gtCode = 0x3e; // '>'
-const _questionCode = 0x3f; // '?'
+const _colonCode = 0x3A; // ':'
+const _ltCode = 0x3C; // '<'
+const _eqCode = 0x3D; // '='
+const _gtCode = 0x3E; // '>'
+const _questionCode = 0x3F; // '?'
 const _atCode = 0x40; // '@'
 const _upperACode = 0x41; // 'A'
 const _upperHCode = 0x48; // 'H'
-const _upperZCode = 0x5a; // 'Z'
-const _bracketOpenCode = 0x5b; // '['
-const _backslashCode = 0x5c; // '\'
-const _bracketCloseCode = 0x5d; // ']'
-const _underscoreCode = 0x5f; // '_'
+const _upperZCode = 0x5A; // 'Z'
+const _bracketOpenCode = 0x5B; // '['
+const _backslashCode = 0x5C; // '\'
+const _bracketCloseCode = 0x5D; // ']'
+const _underscoreCode = 0x5F; // '_'
 const _backtickCode = 0x60; // '`'
 const _lowerACode = 0x61; // 'a'
 const _lowerHCode = 0x68; // 'h'
-const _lowerZCode = 0x7a; // 'z'
-const _tildeCode = 0x7e; // '~'
+const _lowerZCode = 0x7A; // 'z'
+const _tildeCode = 0x7E; // '~'
 const _copyrightCode = 0xA9; // '©'
 const _registeredCode = 0xAE; // '®'
 const _bmpSymbolFirstCode = 0x2000;
 const _bmpSymbolLastCode = 0x2DFF;
+const _ideographicSpaceCode = 0x3000; // '　'
+const _cornerBracketOpenCode = 0x300C; // '「'
+const _cornerBracketCloseCode = 0x300D; // '」'
+const _lenticularBracketOpenCode = 0x3010; // '【'
+const _lenticularBracketCloseCode = 0x3011; // '】'
 const _wavyDashCode = 0x3030; // '〰'
 const _partAlternationMarkCode = 0x303D; // '〽'
 const _circledCongratulationCode = 0x3297; // '㊗'
@@ -38,6 +55,8 @@ const _highSurrogateFirstCode = 0xD800;
 const _highSurrogateLastCode = 0xDBFF;
 const _shibuyaCode = 0xE50A;
 const _vs16Code = 0xFE0F;
+const _fullwidthParenOpenCode = 0xFF08; // '（'
+const _fullwidthParenCloseCode = 0xFF09; // '）'
 
 const _bmpSymbolEmojiCodes = {
   0x203C,
@@ -206,10 +225,65 @@ const _bmpSymbolEmojiCodes = {
   0x2B55,
 };
 
+bool isSpace(int code) {
+  return code == _spaceCode ||
+      code == _ideographicSpaceCode ||
+      code == _tabCode;
+}
+
 bool isAlphanumeric(int code) {
   return (_digit0Code <= code && code <= _digit9Code) ||
       (_upperACode <= code && code <= _upperZCode) ||
       (_lowerACode <= code && code <= _lowerZCode);
+}
+
+bool isNewLine(int code) {
+  return code == lfCode || code == crCode;
+}
+
+// [.,a-zA-Z0-9_/:%#@$&?!~=+-]
+bool isUrlChar(int code) {
+  return (_plusCode <= code && code <= _colonCode) ||
+      (_questionCode <= code && code <= _upperZCode) ||
+      (_lowerACode <= code && code <= _lowerZCode) ||
+      code == _exclamationMarkCode ||
+      code == _hashCode ||
+      code == _dollarCode ||
+      code == _percentCode ||
+      code == _andCode ||
+      code == _eqCode ||
+      code == _underscoreCode ||
+      code == _tildeCode;
+}
+
+// [^ \u3000\t.,!?'"#:/[\]【】()「」（）<>\n\r]
+bool isHashtagChar(int code) {
+  return code != _tabCode &&
+      code != lfCode &&
+      code != crCode &&
+      code != _spaceCode &&
+      code != _exclamationMarkCode &&
+      code != _doubleQuoteCode &&
+      code != _hashCode &&
+      code != _singleQuoteCode &&
+      code != _parenOpenCode &&
+      code != _parenCloseCode &&
+      code != _commaCode &&
+      code != _periodCode &&
+      code != _slashCode &&
+      code != _colonCode &&
+      code != _ltCode &&
+      code != _gtCode &&
+      code != _questionCode &&
+      code != _bracketOpenCode &&
+      code != _bracketCloseCode &&
+      code != _ideographicSpaceCode &&
+      code != _cornerBracketOpenCode &&
+      code != _cornerBracketCloseCode &&
+      code != _lenticularBracketOpenCode &&
+      code != _lenticularBracketCloseCode &&
+      code != _fullwidthParenOpenCode &&
+      code != _fullwidthParenCloseCode;
 }
 
 bool mayBeEmojiStart(int code) {
@@ -232,8 +306,8 @@ bool mayBeEmojiStart(int code) {
 
 bool isPlainChar(int code) {
   if (code
-      case _lfCode ||
-          _crCode ||
+      case lfCode ||
+          crCode ||
           _lowerHCode ||
           _upperHCode ||
           _colonCode ||
