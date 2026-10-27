@@ -219,7 +219,7 @@ class MfmStrike extends MfmInline {
 class MfmPlain extends MfmInline {
   final String text;
 
-  MfmPlain({required this.text}) : super(children: [MfmText(text: text)]);
+  const MfmPlain({required this.text});
 
   @override
   bool operator ==(Object other) {
