@@ -679,12 +679,12 @@ class Language {
             }
             // disallow [.-] of head of username
             if (modifiedName.isEmpty ||
-                RegExp("^[.-]").hasMatch(modifiedName)) {
+                modifiedName.startsWith(RegExp("[.-]"))) {
               invalidMention = true;
             }
             // disallow [.-] of head of hostname
             if (modifiedHost != null &&
-                RegExp("^[.-]").hasMatch(modifiedHost)) {
+                modifiedHost.startsWith(RegExp("[.-]"))) {
               invalidMention = true;
             }
             // generate a text if mention is invalid
