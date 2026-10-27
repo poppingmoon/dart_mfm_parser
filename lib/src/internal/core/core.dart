@@ -9,7 +9,9 @@ class Success<T> implements Result<T> {
   final int index;
 }
 
-class Failure<T> implements Result<T> {}
+class Failure<T> implements Result<T> {
+  const Failure();
+}
 
 sealed class Result<T> {}
 
@@ -32,7 +34,7 @@ typedef ParserHandler<T> =
 
 Success<T> success<T>(int index, T value) =>
     Success<T>(value: value, index: index);
-Failure<T> failure<T>() => Failure<T>();
+Failure<T> failure<T>() => const Failure<Never>();
 
 class Parser<T> {
   Parser({required this.handler, this.name, this.firstChars});
