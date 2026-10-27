@@ -1,5 +1,6 @@
 import 'package:mfm_parser/mfm_parser.dart' hide parse;
 import 'package:mfm_parser/mfm_parser.dart' as mfm_parser;
+import 'package:mfm_parser/src/internal/twemoji_parser.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -445,6 +446,28 @@ hoge""";
           MfmUnicodeEmoji(emoji: "🛜"),
         ];
         expect(parse(input), output);
+      });
+
+      test("parse all BMP emojis", () {
+        final buffer = StringBuffer();
+        final output = <MfmUnicodeEmoji>[];
+        for (var code = 0; code <= 0xFFFF; code++) {
+          if ((0xD800 <= code && code <= 0xDFFF) || code == 0xFE0F) {
+            continue;
+          }
+          final emoji = String.fromCharCode(code);
+          if (twemojiParser.matchAsPrefix(emoji)?[0] case final emoji?) {
+            buffer.write(emoji);
+            output.add(MfmUnicodeEmoji(emoji: emoji));
+          }
+          if (twemojiParser.matchAsPrefix('$emoji\uFE0F')?[0]
+              case final emoji?) {
+            buffer.write(emoji);
+            output.add(MfmUnicodeEmoji(emoji: emoji));
+          }
+        }
+        final input = buffer.toString();
+        expect(parse(input), orderedEquals(output));
       });
     });
 
