@@ -1005,6 +1005,18 @@ hoge""";
         expect(parse(input), orderedEquals(output));
       });
 
+      test("allow `.` in username", () {
+        const input = "@bsky.brid.gy@bsky.brid.gy";
+        const output = [
+          MfmMention(
+            username: "bsky.brid.gy",
+            host: "bsky.brid.gy",
+            acct: "@bsky.brid.gy@bsky.brid.gy",
+          ),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
       test("disallow `-` in head of username", () {
         const input = "@-abc";
         const output = [MfmText(text: "@-abc")];
@@ -1303,6 +1315,23 @@ hoge""";
         const output = [
           MfmUrl(url: "https://misskey.io/@ai...foo", brackets: false),
           MfmText(text: "..."),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with comma", () {
+        const input = "https://example.com/foo?bar=a,b";
+        const output = [
+          MfmUrl(url: "https://example.com/foo?bar=a,b", brackets: false),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("ignore trailing comma", () {
+        const input = "https://example.com/foo, bar";
+        const output = [
+          MfmUrl(url: "https://example.com/foo", brackets: false),
+          MfmText(text: ", bar"),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -2015,12 +2044,12 @@ hoge""";
           expect(parse(input), orderedEquals(output));
         });
 
-        test("outside ()", () {
-          const input = "(#abc)";
+        test("outside （）", () {
+          const input = "（#abc）";
           const output = [
-            MfmText(text: "("),
+            MfmText(text: "（"),
             MfmHashtag(hashtag: "abc"),
-            MfmText(text: ")"),
+            MfmText(text: "）"),
           ];
           expect(parse(input), orderedEquals(output));
         });
