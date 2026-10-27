@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:mfm_parser/src/mfm_parser.dart';
 
 class Success<T> implements Result<T> {
@@ -11,6 +13,20 @@ class Failure<T> implements Result<T> {}
 
 sealed class Result<T> {}
 
+class Span {
+  const Span(this.start, this.end);
+
+  final int start;
+  final int end;
+}
+
+class ManyThenItems<T, U> {
+  const ManyThenItems(this.items, this.afterValue);
+
+  final List<T> items;
+  final U afterValue;
+}
+
 typedef ParserHandler<T> =
     Result<T> Function(String input, int index, FullParserOpts state);
 
@@ -19,31 +35,11 @@ Success<T> success<T>(int index, T value) =>
 Failure<T> failure<T>() => Failure<T>();
 
 class Parser<T> {
+  Parser({required this.handler, this.name, this.firstChars});
+
   String? name;
   late ParserHandler<T> handler;
-
-  Parser({required ParserHandler<T> handler, this.name}) {
-    this.handler = (input, index, state) {
-      if (state.trace && name != null) {
-        final pos = "$index";
-        // ignore: avoid_print
-        print("${pos.padRight(6)}enter $name");
-        final result = handler(input, index, state);
-        switch (result) {
-          case Success():
-            final pos = "$index:${result.index}";
-            // ignore: avoid_print
-            print("${pos.padRight(6)}match $name");
-          case Failure():
-            final pos = "$index";
-            // ignore: avoid_print
-            print("${pos.padRight(6)}fail $name");
-        }
-        return result;
-      }
-      return handler(input, index, state);
-    };
-  }
+  String? firstChars;
 
   Parser<U> map<U>(U Function(T value) fn) {
     return Parser<U>(
@@ -161,10 +157,34 @@ Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
 }
 
 Parser<T> alt<T>(List<Parser<T>> parsers) {
+  final candidatesByChar = parsers.any((parser) => parser.firstChars != null)
+      ? <int, List<Parser<T>>>{}
+      : null;
   return Parser(
     handler: (input, index, state) {
-      for (var i = 0; i < parsers.length; i++) {
-        final result = parsers[i].handler(input, index, state);
+      var candidates = parsers;
+      if (candidatesByChar != null) {
+        final code = index < input.length
+            ? min(input.codeUnitAt(index), 0x80)
+            : -1;
+        candidates = candidatesByChar.putIfAbsent(
+          code,
+          () => parsers
+              .where(
+                (parser) => switch (parser.firstChars) {
+                  final firstChars?
+                      when code >= 0 &&
+                          firstChars.contains(String.fromCharCode(code)) =>
+                    true,
+                  null => true,
+                  _ => false,
+                },
+              )
+              .toList(),
+        );
+      }
+      for (final candidate in candidates) {
+        final result = candidate.handler(input, index, state);
         if (result is Success) {
           return result;
         }
@@ -172,6 +192,19 @@ Parser<T> alt<T>(List<Parser<T>> parsers) {
       return failure();
     },
   );
+}
+
+Parser<T> first<T>(String chars, Parser<T> parser) {
+  final guarded = Parser<T>(
+    handler: (input, index, state) {
+      if (index >= input.length || !chars.contains(input[index])) {
+        return failure();
+      }
+      return parser.handler(input, index, state);
+    },
+  );
+  guarded.firstChars = chars;
+  return guarded;
 }
 
 Parser<T> succeeded<T>(T value) {
@@ -191,6 +224,83 @@ Parser<void> notMatch(Parser<dynamic> parser) {
       } else {
         return failure();
       }
+    },
+  );
+}
+
+int stateKey(FullParserOpts state) {
+  return state.depth * 2 + (state.linkLabel ? 1 : 0);
+}
+
+Parser<String> until(Parser<dynamic> terminator, int min) {
+  final parserKey = Object();
+  return Parser(
+    handler: (input, index, state) {
+      state.untilSpans ??= {};
+      final spans = state.untilSpans!.putIfAbsent(parserKey, () => {});
+      final span = spans[input];
+      int end;
+      if (span != null && span.start <= index && index <= span.end) {
+        end = span.end;
+      } else {
+        end = index;
+        while (end < input.length &&
+            terminator.handler(input, end, state) is Failure) {
+          end++;
+        }
+        spans[input] = Span(index, end);
+      }
+      if (end - index < min) {
+        return failure();
+      }
+      return success(end, input.substring(index, end));
+    },
+  );
+}
+
+Parser<ManyThenItems<T, U>> manyThen<T, U>(
+  Parser<T> item,
+  Parser<dynamic> stop,
+  Parser<U> after,
+  int min,
+) {
+  final element = seq([notMatch(stop), item], select: 1);
+  final parserKey = Object();
+  return Parser(
+    handler: (input, index, state) {
+      state.manyThenFailures ??= {};
+      final byInput = state.manyThenFailures!.putIfAbsent(parserKey, () => {});
+      final byState = byInput.putIfAbsent(input, () => {});
+      final failures = byState.putIfAbsent(stateKey(state), () => {});
+      final boundaries = <int>[];
+      final items = <T>[];
+      var latestIndex = index;
+      while (!failures.contains(latestIndex)) {
+        boundaries.add(latestIndex);
+        if (latestIndex >= input.length) {
+          break;
+        }
+        final result = element.handler(input, latestIndex, state);
+        if (result is! Success) {
+          break;
+        }
+        items.add(result.value as T);
+        latestIndex = result.index;
+      }
+      if (items.length < min) {
+        return failure();
+      }
+      final Result<U> afterResult = failures.contains(latestIndex)
+          ? failure<U>()
+          : after.handler(input, latestIndex, state);
+      if (afterResult is! Success<U>) {
+        failures.addAll(boundaries);
+        return failure();
+      }
+      return success(
+        afterResult.index,
+        ManyThenItems(items, afterResult.value),
+      );
     },
   );
 }
@@ -249,16 +359,44 @@ Parser<T> lazy<T>(Parser<T> Function() fn) {
   );
 }
 
+Parser<T> traced<T>(Parser<T> parser, String name) {
+  return Parser(
+    handler: (input, index, state) {
+      final result = parser.handler(input, index, state);
+      if (!state.trace) {
+        return result;
+      }
+      final pos = "$index";
+      // ignore: avoid_print
+      print("${pos.padRight(6)}enter $name");
+      switch (result) {
+        case Success():
+          final pos = "$index:${result.index}";
+          // ignore: avoid_print
+          print("${pos.padRight(6)}match $name");
+        case Failure():
+          final pos = "$index";
+          // ignore: avoid_print
+          print("${pos.padRight(6)}fail $name");
+      }
+      return result;
+    },
+    name: name,
+  );
+}
+
 Map<String, Parser<dynamic>> createLanguage(
-  Map<String, Parser<dynamic> Function()> syntaxes,
+  Map<String, Parser<dynamic>? Function()> syntaxes,
 ) {
   final Map<String, Parser<dynamic>> rules = {};
 
   for (final entry in syntaxes.entries) {
     rules[entry.key] = lazy(() {
       final parser = syntaxes[entry.key]!();
-      parser.name = entry.key;
-      return parser;
+      if (parser == null) {
+        throw Exception('syntax must return a parser.');
+      }
+      return traced(parser, entry.key);
     });
   }
   return rules;

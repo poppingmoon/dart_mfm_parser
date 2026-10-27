@@ -2,7 +2,6 @@ import 'package:mfm_parser/src/internal/core/core.dart';
 import 'package:mfm_parser/src/internal/extension/string_extension.dart';
 import 'package:mfm_parser/src/internal/twemoji_parser.dart';
 import 'package:mfm_parser/src/internal/utils.dart';
-import 'package:mfm_parser/src/mfm_parser.dart';
 import 'package:mfm_parser/src/node.dart';
 
 final space = regexp(RegExp(r"[\u0020\u3000\t]"));
@@ -39,9 +38,28 @@ Parser<void> notLinkLabel = Parser(
   },
 );
 
+bool alphaAndNumBefore(String input, int index) {
+  return index > 0 && isAlphanumeric(input.codeUnitAt(index - 1));
+}
+
+int trailingLength(String text, String chars) {
+  var length = 0;
+  while (length < text.length &&
+      chars.contains(text[text.length - 1 - length])) {
+    length += 1;
+  }
+  return length;
+}
+
 Parser<void> nestable = Parser(
   handler: (_, index, state) {
-    return (state.depth < state.nestLimit) ? success(index, null) : failure();
+    if (state.nestBudget != null) {
+      if (state.nestBudget! <= 0) {
+        return failure();
+      }
+      state.nestBudget = state.nestBudget! - 1;
+    }
+    return state.depth < state.nestLimit ? success(index, null) : failure();
   },
 );
 
@@ -58,12 +76,6 @@ Parser<dynamic> nest(Parser<dynamic> parser, {Parser<dynamic>? fallback}) {
       return result;
     },
   );
-}
-
-Set<int> getLinkLabelFailures(String input, FullParserOpts state) {
-  state.linkLabelFailures ??= {};
-  final byDepth = state.linkLabelFailures!.putIfAbsent(input, () => {});
-  return byDepth.putIfAbsent(state.depth, () => {});
 }
 
 final language = Language();
@@ -105,56 +117,61 @@ class Language {
     _l = createLanguage({
       "full": () => alt([
         unicodeEmoji,
-        centerTag,
-        smallTag,
-        plainTag,
-        boldTag,
-        italicTag,
-        strikeTag,
-        urlAlt,
-        big,
-        boldAsta,
-        italicAsta,
-        boldUnder,
-        italicUnder,
-        codeBlock,
-        inlineCode,
-        quote,
-        mathBlock,
-        mathInline,
-        strikeWave,
-        fn,
-        mention,
-        hashTag,
-        emojiCode,
-        link,
-        url,
+        first("\r\n<", centerTag),
+        first("<", smallTag),
+        first("<", plainTag),
+        first("<", boldTag),
+        first("<", italicTag),
+        first("<", strikeTag),
+        first("<", urlAlt),
+        first("*", big),
+        first("*", boldAsta),
+        first("*", italicAsta),
+        first("_", boldUnder),
+        first("_", italicUnder),
+        first("\r\n`", codeBlock),
+        first("`", inlineCode),
+        first("\r\n>", quote),
+        first("\r\n\\", mathBlock),
+        first(r"\", mathInline),
+        first("~", strikeWave),
+        first(r"$", fn),
+        first("@", mention),
+        first("#", hashTag),
+        first(":", emojiCode),
+        first("?[", link),
+        first("h", url),
         search,
         text,
       ]),
-      "simple": () => alt([unicodeEmoji, emojiCode, plainTag, text]),
+      "simple": () => alt([
+        unicodeEmoji,
+        first(":", emojiCode),
+        first("<", plainTag),
+        text,
+      ]),
       "inline": () => alt([
         unicodeEmoji,
-        smallTag,
-        plainTag,
-        boldTag,
-        italicTag,
-        strikeTag,
-        urlAlt,
-        big,
-        boldAsta,
-        italicAsta,
-        boldUnder,
-        italicUnder,
-        inlineCode,
-        mathInline,
-        strikeWave,
-        fn,
-        mention,
-        hashTag,
-        emojiCode,
-        link,
-        url,
+        first("<", smallTag),
+        first("<", plainTag),
+        first("<", boldTag),
+        first("<", italicTag),
+        first("<", strikeTag),
+        first("<", urlAlt),
+        first("*", big),
+        first("*", boldAsta),
+        first("*", italicAsta),
+        first("_", boldUnder),
+        first("_", italicUnder),
+        first("`", inlineCode),
+        first(r"\", mathInline),
+        first("~", strikeWave),
+        first(r"$", fn),
+        first("@", mention),
+        first("#", hashTag),
+        first(":", emojiCode),
+        first("?[", link),
+        first("h", url),
         text,
       ]),
       "quote": () {
@@ -213,10 +230,7 @@ class Language {
           mark,
           seq([notMatch(newLine), char], select: 1).many(0),
           newLine,
-          seq([
-            notMatch(seq([newLine, mark, lineEnd])),
-            char,
-          ], select: 1).many(1),
+          until(seq([newLine, mark, lineEnd]), 1),
           newLine,
           mark,
           lineEnd,
@@ -225,7 +239,7 @@ class Language {
           final lang = ((result as List<dynamic>)[3] as List<dynamic>)
               .join()
               .trim();
-          final code = (result[5] as List<dynamic>).join();
+          final code = result[5] as String;
 
           return MfmCodeBlock(code: code, lang: lang.isNotEmpty ? lang : null);
         });
@@ -239,17 +253,14 @@ class Language {
           lineBegin,
           open,
           newLine.option(),
-          seq([
-            notMatch(seq([newLine.option(), close])),
-            char,
-          ], select: 1).many(1),
+          until(seq([newLine.option(), close]), 1),
           newLine.option(),
           close,
           lineEnd,
           newLine.option(),
-        ], select: 4).map(
-          (result) => MfmMathBlock(formula: (result as List<dynamic>).join()),
-        );
+        ], select: 4).map((result) {
+          return MfmMathBlock(formula: result as String);
+        });
       },
       "centerTag": () {
         final open = str("<center>");
@@ -260,19 +271,19 @@ class Language {
           lineBegin,
           open,
           newLine.option(),
-          seq([
-            notMatch(seq([newLine.option(), close])),
+          manyThen(
             nest(inline),
-          ], select: 1).many(1),
-          newLine.option(),
-          close,
-          lineEnd,
-          newLine.option(),
-        ], select: 4).map(
-          (result) => MfmCenter(
-            children: mergeText(result as List<dynamic>).cast<MfmInline>(),
+            seq([newLine.option(), close]),
+            seq([newLine.option(), close, lineEnd, newLine.option()]),
+            1,
           ),
-        );
+        ], select: 4).map((result) {
+          return MfmCenter(
+            children: mergeText(
+              (result as ManyThenItems<dynamic, dynamic>).items,
+            ).cast<MfmInline>(),
+          );
+        });
       },
       "big": () {
         final mark = str("***");
@@ -397,7 +408,7 @@ class Language {
             if (result is! Success) {
               return failure();
             }
-            if (index > 0 && isAlphanumeric(input.codeUnitAt(index - 1))) {
+            if (alphaAndNumBefore(input, index)) {
               return failure();
             }
             final Success(:List<String> value, index: resultIndex) = result;
@@ -422,7 +433,7 @@ class Language {
             if (result is! Success) {
               return failure();
             }
-            if (index > 0 && isAlphanumeric(input.codeUnitAt(index - 1))) {
+            if (alphaAndNumBefore(input, index)) {
               return failure();
             }
             final Success(:List<String> value, index: resultIndex) = result;
@@ -502,10 +513,7 @@ class Language {
         return seq([
           open,
           newLine.option(),
-          seq([
-            notMatch(seq([newLine.option(), close])),
-            char,
-          ], select: 1).many(1).text(),
+          until(seq([newLine.option(), close]), 1),
           newLine.option(),
           close,
         ], select: 2).map((result) => MfmPlain(text: result as String));
@@ -574,28 +582,18 @@ class Language {
         final mark = str("`");
         return seq([
           mark,
-          seq([
-            notMatch(alt([mark, str("´"), newLine])),
-            char,
-          ], select: 1).many(1),
+          until(alt([mark, str("´"), newLine]), 1),
           mark,
-        ], select: 1).map(
-          (result) => MfmInlineCode(code: (result as List<dynamic>).join()),
-        );
+        ], select: 1).map((result) => MfmInlineCode(code: result as String));
       },
       "mathInline": () {
         final open = str(r"\(");
         final close = str(r"\)");
         return seq([
           open,
-          seq([
-            notMatch(alt([close, newLine])),
-            char,
-          ], select: 1).many(1),
+          until(alt([close, newLine]), 1),
           close,
-        ], select: 1).map(
-          (result) => MfmMathInline(formula: (result as List<dynamic>).join()),
-        );
+        ], select: 1).map((result) => MfmMathInline(formula: result as String));
       },
       "mention": () {
         final parser = seq([
@@ -615,7 +613,7 @@ class Language {
               return failure();
             }
 
-            if (index > 0 && isAlphanumeric(input.codeUnitAt(index - 1))) {
+            if (alphaAndNumBefore(input, index)) {
               return failure();
             }
 
@@ -626,9 +624,9 @@ class Language {
 
             var modifiedHost = hostname;
             if (hostname != null) {
-              final regResult = RegExp(r"[.-]+$").firstMatch(hostname);
-              if (regResult != null) {
-                modifiedHost = hostname.slice(0, -1 * regResult[0]!.length);
+              final trailing = trailingLength(hostname, ".-");
+              if (trailing > 0) {
+                modifiedHost = hostname.slice(0, -trailing);
                 if (modifiedHost.isEmpty) {
                   // disallow invalid char only hostname
                   invalidMention = true;
@@ -638,10 +636,10 @@ class Language {
             }
             // remove [.-] of tail of username
             String modifiedName = username;
-            final regResult2 = RegExp(r"[.-]+$").firstMatch(username);
-            if (regResult2 != null) {
+            final trailing = trailingLength(username, ".-");
+            if (trailing > 0) {
               if (modifiedHost == null) {
-                modifiedName = username.slice(0, -1 * regResult2[0]!.length);
+                modifiedName = username.slice(0, -trailing);
               } else {
                 // cannnot to remove tail of username if exist hostname
                 invalidMention = true;
@@ -725,7 +723,7 @@ class Language {
               return failure();
             }
             // check before
-            if (index > 0 && isAlphanumeric(input.codeUnitAt(index - 1))) {
+            if (alphaAndNumBefore(input, index)) {
               return failure();
             }
             final Success(:String value, index: resultIndex) = result;
@@ -756,67 +754,40 @@ class Language {
           },
         );
         final closeLabel = str(']');
-        final openLabel = seq([
+        final parser = seq([
           notLinkLabel,
           alt([str('?['), str('[')]),
-        ], select: 1);
-        final labelItem = seq([
-          notMatch(alt([closeLabel, newLine])),
-          nest(labelInline),
-        ], select: 1);
-        final afterLabel = seq([
-          closeLabel,
-          str('('),
-          alt([urlAlt, urlNoFallback]),
-          str(')'),
-        ], select: 2);
+          manyThen(
+            nest(labelInline),
+            alt([closeLabel, newLine]),
+            seq([
+              closeLabel,
+              str('('),
+              alt([urlAlt, urlNoFallback]),
+              str(')'),
+            ], select: 2),
+            1,
+          ),
+        ]);
         return Parser<MfmLink>(
           handler: (input, index, state) {
-            final openResult = openLabel.handler(input, index, state);
-            if (openResult is! Success) {
+            final result = parser.handler(input, index, state);
+            if (result is! Success) {
               return failure();
             }
 
-            final failedBoundaries = getLinkLabelFailures(input, state);
-            final boundaries = <int>[];
-            final label = <dynamic>[];
-            var latestIndex = openResult.index;
-            while (!failedBoundaries.contains(latestIndex)) {
-              boundaries.add(latestIndex);
-              if (latestIndex >= input.length) {
-                break;
-              }
-              final itemResult = labelItem.handler(input, latestIndex, state);
-              if (itemResult is! Success) {
-                break;
-              }
-              label.add(itemResult.value);
-              latestIndex = itemResult.index;
-            }
-            if (label.isEmpty) {
-              return failure();
-            }
-
-            final knownFailure = failedBoundaries.contains(latestIndex);
-            if (knownFailure) {
-              return failure();
-            }
-            final afterResult = afterLabel.handler(input, latestIndex, state);
-            if (afterResult case Success(:final index, :final MfmUrl value)) {
-              return success(
-                index,
-                MfmLink(
-                  silent: openResult.value == '?[',
-                  url: value.url,
-                  children: mergeText(label),
-                ),
-              );
-            } else {
-              for (final boundary in boundaries) {
-                failedBoundaries.add(boundary);
-              }
-              return failure();
-            }
+            final Success(:List<dynamic> value, index: resultIndex) = result;
+            final silent = value[1] == '?[';
+            final manyThenItems = value[2] as ManyThenItems<dynamic, dynamic>;
+            final url = manyThenItems.afterValue as MfmUrl;
+            return success(
+              resultIndex,
+              MfmLink(
+                silent: silent,
+                url: url.url,
+                children: mergeText(manyThenItems.items),
+              ),
+            );
           },
         );
       },
@@ -854,10 +825,10 @@ class Language {
             final schema = value[1] as String;
             var content = value[2] as String;
             // remove the ".," at the right end
-            final regexpResult = RegExp(r"[.,]+$").firstMatch(content);
-            if (regexpResult != null) {
-              modifiedIndex -= regexpResult.group(0)!.length;
-              content = content.slice(0, -1 * regexpResult.group(0)!.length);
+            final trailing = trailingLength(content, ".,");
+            if (trailing > 0) {
+              modifiedIndex -= trailing;
+              content = content.slice(0, -trailing);
               if (content.isEmpty) {
                 return success(resultIndex, input.slice(index, resultIndex));
               }
@@ -876,10 +847,7 @@ class Language {
           notLinkLabel,
           open,
           regexp(RegExp("https?://")),
-          seq([
-            notMatch(alt([close, space])),
-            char,
-          ], select: 1).many(1),
+          until(alt([close, space]), 1),
           close,
         ]).text();
         return Parser<MfmUrl>(
@@ -902,21 +870,19 @@ class Language {
         return seq([
           newLine.option(),
           lineBegin,
-          seq([
-            notMatch(
-              alt([
-                newLine,
-                seq([space, button, lineEnd]),
-              ]),
-            ),
-            char,
-          ], select: 1).many(1),
+          until(
+            alt([
+              newLine,
+              seq([space, button, lineEnd]),
+            ]),
+            1,
+          ),
           space,
           button,
           lineEnd,
           newLine.option(),
         ]).map((result) {
-          final query = ((result as List<dynamic>)[2] as List<dynamic>).join();
+          final query = (result as List<dynamic>)[2] as String;
           return MfmSearch(
             query: query,
             content: "$query${result[3]}${result[4]}",

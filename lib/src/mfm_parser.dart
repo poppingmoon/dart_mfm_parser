@@ -12,6 +12,7 @@ List<MfmNode> parse(String input, {int? nestLimit}) {
             0,
             FullParserOpts(
               nestLimit: nestLimit ?? 20,
+              nestBudget: input.length * 20 + 1000,
               depth: 0,
               linkLabel: false,
               trace: false,
@@ -43,16 +44,20 @@ List<MfmNode> parseSimple(String input) {
 
 class FullParserOpts {
   int nestLimit;
+  int? nestBudget;
   int depth;
   bool linkLabel;
-  Map<String, Map<int, Set<int>>>? linkLabelFailures;
   bool trace;
+  Map<Object, Map<String, Span>>? untilSpans;
+  Map<Object, Map<String, Map<int, Set<int>>>>? manyThenFailures;
 
   FullParserOpts({
     required this.nestLimit,
+    this.nestBudget,
     required this.depth,
     required this.linkLabel,
-    this.linkLabelFailures,
     required this.trace,
+    this.untilSpans,
+    this.manyThenFailures,
   });
 }

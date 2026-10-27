@@ -315,6 +315,35 @@ hoge""";
 
         expect(parse(input), orderedEquals(output));
       });
+
+      test("ignore internal markers not at line end", () {
+        const input = "```a\nb\n```c\n```d\ne\n```";
+        final output = [
+          const MfmCodeBlock(code: "b\n```c\n```d\ne", lang: "a"),
+        ];
+
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with CRLF line breaks", () {
+        const input = "abc\r\n```js\r\nconst abc = 1;\r\n```\r\n123";
+        final output = [
+          const MfmText(text: "abc"),
+          const MfmCodeBlock(code: "const abc = 1;", lang: "js"),
+          const MfmText(text: "123"),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with CR line breaks", () {
+        const input = "abc\r```js\rconst abc = 1;\r```\r123";
+        final output = [
+          const MfmText(text: "abc"),
+          const MfmCodeBlock(code: "const abc = 1;", lang: "js"),
+          const MfmText(text: "123"),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("mathBlock", () {
@@ -345,6 +374,15 @@ hoge""";
         final output = [const MfmText(text: r"before\[aaa\]")];
         expect(parse(input), orderedEquals(output));
       });
+
+      test("with unclosed tag before", () {
+        const input = "\\[a\\]b\n\\[c\\]";
+        final output = [
+          const MfmText(text: r"\[a\]b"),
+          const MfmMathBlock(formula: "c"),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("center", () {
@@ -363,6 +401,25 @@ hoge""";
           const MfmText(text: "before"),
           const MfmCenter(children: [MfmText(text: "abc\n123\npiyo")]),
           const MfmText(text: "after"),
+        ];
+
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed tag before", () {
+        const input = "<center>a</center>b\n<center>c</center>";
+        final output = [
+          const MfmText(text: "<center>a</center>b"),
+          const MfmCenter(children: [MfmText(text: "c")]),
+        ];
+
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with close tag in plain", () {
+        const input = "<center><plain></center></plain></center>";
+        final output = [
+          MfmCenter(children: [MfmPlain(text: "</center>")]),
         ];
 
         expect(parse(input), orderedEquals(output));
@@ -462,6 +519,12 @@ hoge""";
         ];
         expect(parse(input), orderedEquals(output));
       });
+
+      test("ignore unclosed syntax", () {
+        const input = "***abc";
+        final output = [const MfmText(text: "***abc")];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("bold tag", () {
@@ -500,6 +563,12 @@ hoge""";
         ];
         expect(parse(input), orderedEquals(output));
       });
+
+      test("ignore unclosed syntax", () {
+        const input = "<b>abc";
+        final output = [const MfmText(text: "<b>abc")];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("bold", () {
@@ -536,6 +605,28 @@ hoge""";
             ],
           ),
         ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with underscores", () {
+        const input = "__abc__";
+        final output = [
+          const MfmBold(children: [MfmText(text: "abc")]),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with underscores (space allowed)", () {
+        const input = "__a b__";
+        final output = [
+          const MfmBold(children: [MfmText(text: "a b")]),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with underscores (only alphanumeric and space allowed)", () {
+        const input = "__a*b__";
+        final output = [const MfmText(text: "__a*b__")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -608,6 +699,12 @@ hoge""";
         ];
         expect(parse(input), orderedEquals(output));
       });
+
+      test("ignore unclosed syntax", () {
+        const input = "<small>abc";
+        final output = [const MfmText(text: "<small>abc")];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("italic tag", () {
@@ -644,6 +741,12 @@ hoge""";
             ],
           ),
         ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("ignore unclosed syntax", () {
+        const input = "<i>abc";
+        final output = [const MfmText(text: "<i>abc")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -750,6 +853,12 @@ hoge""";
         ];
         expect(parse(input), orderedEquals(output));
       });
+
+      test("ignore unclosed syntax", () {
+        const input = "<s>abc";
+        final output = [const MfmText(text: "<s>abc")];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("strike", () {
@@ -758,6 +867,18 @@ hoge""";
         final output = [
           const MfmStrike(children: [MfmText(text: "foo")]),
         ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("ignore unclosed syntax", () {
+        const input = "~~abc";
+        final output = [const MfmText(text: "~~abc")];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("disallow line break", () {
+        const input = "~~abc\ndef~~";
+        final output = [const MfmText(text: "~~abc\ndef~~")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -793,6 +914,15 @@ hoge""";
           ),
         ];
         expect(parse(input), output);
+      });
+
+      test("with unclosed tag in previous line", () {
+        const input = '\\(a\n\\(b\\)';
+        final output = [
+          const MfmText(text: '\\(a\n'),
+          const MfmMathInline(formula: "b"),
+        ];
+        expect(parse(input), orderedEquals(output));
       });
     });
 
@@ -880,6 +1010,28 @@ hoge""";
         expect(parse(input), orderedEquals(output));
       });
 
+      test("remove trailing periods only", () {
+        const input = "@abc..def..";
+        final output = [
+          const MfmMention(username: "abc..def", acct: "@abc..def"),
+          const MfmText(text: ".."),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("remove trailing periods of hostname only", () {
+        const input = "@abc..def@misskey..io..";
+        final output = [
+          const MfmMention(
+            username: "abc..def",
+            host: "misskey..io",
+            acct: "@abc..def@misskey..io",
+          ),
+          const MfmText(text: ".."),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
       test("allow `-` in username", () {
         const input = "@abc-d";
         final output = [const MfmMention(username: "abc-d", acct: "@abc-d")];
@@ -949,6 +1101,18 @@ hoge""";
           const MfmMention(username: "abc", host: "aaa", acct: "@abc@aaa"),
           const MfmText(text: "-"),
         ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("disallow `-` in tail of username with hostname", () {
+        const input = "@abc-@misskey.io";
+        final output = [const MfmText(text: "@abc-@misskey.io")];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("disallow `.` in tail of username with hostname", () {
+        const input = "@abc.@misskey.io";
+        final output = [const MfmText(text: "@abc.@misskey.io")];
         expect(parse(input), orderedEquals(output));
       });
     });
@@ -1193,6 +1357,15 @@ hoge""";
         expect(parse(input), orderedEquals(output));
       });
 
+      test("ignore trailing periods only", () {
+        const input = "https://misskey.io/@ai...foo...";
+        final output = [
+          const MfmUrl(url: "https://misskey.io/@ai...foo", brackets: false),
+          const MfmText(text: "..."),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
       test("with brackets", () {
         const input = "https://example.com/foo(bar)";
         final output = [
@@ -1257,6 +1430,40 @@ hoge""";
         const input = "<https://こいしちゃんするやつ.example.com>";
         final output = [
           const MfmUrl(url: "https://こいしちゃんするやつ.example.com", brackets: true),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed angle brackets before", () {
+        const input = "<https://a <https://b>";
+        final output = [
+          const MfmText(text: "<"),
+          const MfmUrl(url: "https://a", brackets: false),
+          const MfmText(text: " "),
+          const MfmUrl(url: "https://b", brackets: true),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed angle brackets in previous line", () {
+        const input = "<https://a\n<https://b>";
+        final output = [
+          const MfmUrl(url: "https://a\n<https://b", brackets: true),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed angle brackets in bold", () {
+        const input = "**<https://a <https://b>**";
+        final output = [
+          const MfmBold(
+            children: [
+              MfmText(text: "<"),
+              MfmUrl(url: "https://a", brackets: false),
+              MfmText(text: " "),
+              MfmUrl(url: "https://b", brackets: true),
+            ],
+          ),
         ];
         expect(parse(input), orderedEquals(output));
       });
@@ -1521,6 +1728,97 @@ hoge""";
         ];
         expect(parse(input), orderedEquals(output));
       });
+
+      test("with unclosed angle brackets in label", () {
+        const input = "[<https://a <https://b>](https://c)";
+        final output = [
+          const MfmLink(
+            silent: false,
+            url: "https://c",
+            children: [MfmText(text: "<https://a <https://b>")],
+          ),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed angle brackets in url part", () {
+        const input = "[x](<https://a <https://b>)";
+        final output = [
+          const MfmText(text: "[x](<"),
+          const MfmUrl(url: "https://a", brackets: false),
+          const MfmText(text: " "),
+          const MfmUrl(url: "https://b", brackets: true),
+          const MfmText(text: ")"),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed brackets before", () {
+        const input = "[[[foo] [bar](https://example.com)";
+        final output = [
+          const MfmText(text: "[[[foo] "),
+          const MfmLink(
+            silent: false,
+            url: "https://example.com",
+            children: [MfmText(text: "bar")],
+          ),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed brackets after hashtag", () {
+        const input = r"[#a$[x";
+        final output = [
+          const MfmText(text: "["),
+          const MfmHashtag(hashtag: r"a$"),
+          const MfmText(text: "[x"),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed brackets in label", () {
+        const input = "[[[foo](https://example.com)";
+        final output = [
+          const MfmLink(
+            silent: false,
+            url: "https://example.com",
+            children: [MfmText(text: "[[foo")],
+          ),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed brackets in previous line", () {
+        const input = "[[foo\n?[[bar](https://example.com)";
+        final output = [
+          const MfmText(text: "[[foo\n"),
+          const MfmLink(
+            silent: true,
+            url: "https://example.com",
+            children: [MfmText(text: "[bar")],
+          ),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed brackets in bold", () {
+        const input = "**[[foo** [[bar** **[baz](https://example.com)**";
+        final output = [
+          const MfmBold(children: [MfmText(text: "[[foo")]),
+          const MfmText(text: " "),
+          const MfmLink(
+            silent: false,
+            url: "https://example.com",
+            children: [
+              MfmText(text: "[bar"),
+              MfmBold(children: [MfmText(text: " ")]),
+              MfmText(text: "[baz"),
+            ],
+          ),
+          const MfmText(text: "**"),
+        ];
+        expect(parse(input), orderedEquals(output));
+      });
     });
 
     group("fn", () {
@@ -1603,6 +1901,12 @@ hoge""";
           MfmPlain(text: "**Hello** world"),
           const MfmText(text: "\nb"),
         ];
+        expect(parse(input), orderedEquals(output));
+      });
+
+      test("with unclosed tag before", () {
+        const input = "<plain>a\n<plain>b</plain>";
+        final output = [MfmPlain(text: "a\n<plain>b")];
         expect(parse(input), orderedEquals(output));
       });
     });
