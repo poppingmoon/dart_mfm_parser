@@ -167,7 +167,7 @@ void main() {
         final lines = <String>[];
         runZoned(
           () {
-            final lang = createLanguage({"a": () => str("a")});
+            final lang = createLanguage({"a": () => str("a")}, trace: true);
             final state = createState();
             state.trace = true;
             lang["a"]!.handler("a", 0, state);
@@ -183,6 +183,23 @@ void main() {
           "0     enter a",
           "0     fail a",
         ]);
+      });
+
+      test("do not log the calls of the rules when trace is disabled", () {
+        final lines = <String>[];
+        runZoned(
+          () {
+            final lang = createLanguage({"a": () => str("a")});
+            final state = createState();
+            state.trace = true;
+            lang["a"]!.handler("a", 0, state);
+            lang["a"]!.handler("b", 0, state);
+          },
+          zoneSpecification: ZoneSpecification(
+            print: (self, parent, zone, line) => lines.add(line),
+          ),
+        );
+        expect(lines, isEmpty);
       });
 
       test("throw if the syntax does not return a parser", () {

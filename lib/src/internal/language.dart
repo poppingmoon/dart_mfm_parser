@@ -145,7 +145,7 @@ class Language {
   Parser<dynamic> get unicodeEmoji => _l["unicodeEmoji"]!;
   Parser<dynamic> get search => _l["search"]!;
 
-  Language() {
+  Language({bool trace = false}) {
     _l = createLanguage({
       "full": () => alt([
         unicodeEmoji,
@@ -936,6 +936,6 @@ class Language {
           );
         });
       },
-    });
+    }, trace: trace);
   }
 }

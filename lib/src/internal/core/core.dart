@@ -402,8 +402,9 @@ Parser<T> traced<T>(Parser<T> parser, String name) {
 }
 
 Map<String, Parser<dynamic>> createLanguage(
-  Map<String, Parser<dynamic>? Function()> syntaxes,
-) {
+  Map<String, Parser<dynamic>? Function()> syntaxes, {
+  bool trace = false,
+}) {
   final Map<String, Parser<dynamic>> rules = {};
 
   for (final entry in syntaxes.entries) {
@@ -412,7 +413,11 @@ Map<String, Parser<dynamic>> createLanguage(
       if (parser == null) {
         throw Exception('syntax must return a parser.');
       }
-      return traced(parser, entry.key);
+      if (trace) {
+        return traced(parser, entry.key);
+      } else {
+        return parser;
+      }
     });
   }
   return rules;
