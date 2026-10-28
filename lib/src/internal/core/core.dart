@@ -139,24 +139,47 @@ Parser<String> regexp<T extends RegExp>(T pattern) {
 }
 
 Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
-  return Parser(
-    handler: (input, index, state) {
-      var latestIndex = index;
-      final accum = <dynamic>[];
+  if (select != null) {
+    return Parser(
+      handler: (input, index, state) {
+        var latestIndex = index;
+        dynamic selected;
 
-      for (var i = 0; i < parsers.length; i++) {
-        final result = parsers[i].handler(input, latestIndex, state);
-        switch (result) {
-          case Success(:final value, :final index):
-            latestIndex = index;
-            accum.add(value);
-          case Failure():
-            return failure();
+        for (var i = 0; i < parsers.length; i++) {
+          final result = parsers[i].handler(input, latestIndex, state);
+          switch (result) {
+            case Success(:final value, :final index):
+              latestIndex = index;
+              if (i == select) {
+                selected = value;
+              }
+            case Failure():
+              return failure();
+          }
         }
-      }
-      return success(latestIndex, (select != null ? accum[select] : accum));
-    },
-  );
+        return success(latestIndex, selected);
+      },
+    );
+  } else {
+    return Parser(
+      handler: (input, index, state) {
+        var latestIndex = index;
+        final accum = <dynamic>[];
+
+        for (var i = 0; i < parsers.length; i++) {
+          final result = parsers[i].handler(input, latestIndex, state);
+          switch (result) {
+            case Success(:final value, :final index):
+              latestIndex = index;
+              accum.add(value);
+            case Failure():
+              return failure();
+          }
+        }
+        return success(latestIndex, accum);
+      },
+    );
+  }
 }
 
 Parser<T> alt<T>(List<Parser<T>> parsers) {
