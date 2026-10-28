@@ -207,10 +207,19 @@ class Language {
         text,
       ]),
       "quote": () {
+        final line = Parser<String>(
+          handler: (input, index, _) {
+            var i = index;
+            while (i < input.length && !isNewLine(input.codeUnitAt(i))) {
+              i++;
+            }
+            return success(i, input.substring(index, i));
+          },
+        );
         final lines = seq([
           str(">"),
           space.option(),
-          seq([notMatch(newLine), char], select: 1).many(0).text(),
+          line,
         ], select: 2).sep(newLine, 1);
 
         final parser = seq([
