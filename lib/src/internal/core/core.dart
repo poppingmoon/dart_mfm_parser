@@ -128,12 +128,12 @@ Parser<String> str(String value) {
 Parser<String> regexp<T extends RegExp>(T pattern) {
   return Parser(
     handler: (input, index, _) {
-      final result = pattern.matchAsPrefix(input, index);
+      final result = pattern.matchAsPrefix(input, index)?.group(0);
 
       if (result == null) {
         return failure();
       }
-      return success(index + result.group(0)!.length, result.group(0)!);
+      return success(index + result.length, result);
     },
   );
 }
