@@ -4,3 +4,6 @@ analyzer:
     strict-casts: true
     strict-inference: true
     strict-raw-types: true
+linter:
+  rules:
+    use_primary_constructors: false
