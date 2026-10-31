@@ -5,7 +5,7 @@ version: 1.0.7
 homepage: https://github.com/shiosyakeyakini-info/dart_mfm_parser
 
 environment:
-  sdk: ">=3.8.0 <4.0.0"
+  sdk: ">=3.13.0 <4.0.0"
 
 dev_dependencies:
   lint: ^2.8.0

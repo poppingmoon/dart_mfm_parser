@@ -1,25 +1,17 @@
 import 'package:collection/collection.dart';
 
 /// Misskey Elements Base Node
-sealed class MfmNode {
+sealed class const MfmNode({
   /// if node has child, will be array.
-  final List<MfmNode>? children;
+  final List<MfmNode>? children,
+});
 
-  const MfmNode({this.children});
-}
+sealed class const MfmBlock({super.children}) extends MfmNode;
 
-sealed class MfmBlock extends MfmNode {
-  const MfmBlock({super.children});
-}
-
-sealed class MfmInline extends MfmNode {
-  const MfmInline({super.children});
-}
+sealed class const MfmInline({super.children}) extends MfmNode;
 
 /// Quote Node
-class MfmQuote extends MfmBlock {
-  const MfmQuote({required super.children});
-
+class const MfmQuote({required super.children}) extends MfmBlock {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -35,12 +27,10 @@ class MfmQuote extends MfmBlock {
 
 /// Search Node
 /// [query] is search query
-class MfmSearch extends MfmBlock {
-  final String query;
-  final String content;
-
-  const MfmSearch({required this.query, required this.content});
-
+class const MfmSearch({
+  required final String query,
+  required final String content,
+}) extends MfmBlock {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -55,12 +45,8 @@ class MfmSearch extends MfmBlock {
 }
 
 /// Code Block Node
-class MfmCodeBlock extends MfmBlock {
-  final String code;
-  final String? lang;
-
-  const MfmCodeBlock({required this.code, this.lang});
-
+class const MfmCodeBlock({required final String code, final String? lang})
+    extends MfmBlock {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -74,11 +60,7 @@ class MfmCodeBlock extends MfmBlock {
   int get hashCode => Object.hash(runtimeType, code, lang);
 }
 
-class MfmMathBlock extends MfmBlock {
-  final String formula;
-
-  const MfmMathBlock({required this.formula});
-
+class const MfmMathBlock({required final String formula}) extends MfmBlock {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -92,9 +74,7 @@ class MfmMathBlock extends MfmBlock {
 }
 
 /// Centering Node
-class MfmCenter extends MfmBlock {
-  const MfmCenter({super.children});
-
+class const MfmCenter({super.children}) extends MfmBlock {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -109,11 +89,7 @@ class MfmCenter extends MfmBlock {
 }
 
 /// Unicode Emoji Node
-class MfmUnicodeEmoji extends MfmInline {
-  final String emoji;
-
-  const MfmUnicodeEmoji({required this.emoji});
-
+class const MfmUnicodeEmoji({required final String emoji}) extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -127,11 +103,7 @@ class MfmUnicodeEmoji extends MfmInline {
 }
 
 /// Misskey style Emoji Node
-class MfmEmojiCode extends MfmInline {
-  final String name;
-
-  const MfmEmojiCode({required this.name});
-
+class const MfmEmojiCode({required final String name}) extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -145,9 +117,8 @@ class MfmEmojiCode extends MfmInline {
 }
 
 /// Bold Element Node
-class MfmBold extends MfmInline {
-  const MfmBold({required List<MfmInline> super.children});
-
+class const MfmBold({required List<MfmInline> super.children})
+    extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -162,9 +133,8 @@ class MfmBold extends MfmInline {
 }
 
 /// Small Element Node
-class MfmSmall extends MfmInline {
-  const MfmSmall({required List<MfmInline> super.children});
-
+class const MfmSmall({required List<MfmInline> super.children})
+    extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -179,9 +149,8 @@ class MfmSmall extends MfmInline {
 }
 
 /// Italic Element Node
-class MfmItalic extends MfmInline {
-  const MfmItalic({required List<MfmInline> super.children});
-
+class const MfmItalic({required List<MfmInline> super.children})
+    extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -196,9 +165,8 @@ class MfmItalic extends MfmInline {
 }
 
 /// Strike Element Node
-class MfmStrike extends MfmInline {
-  const MfmStrike({required List<MfmInline> super.children});
-
+class const MfmStrike({required List<MfmInline> super.children})
+    extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -215,11 +183,7 @@ class MfmStrike extends MfmInline {
 /// Plain Element Node
 ///
 /// text will be unapplicated misskey element.
-class MfmPlain extends MfmInline {
-  final String text;
-
-  const MfmPlain({required this.text});
-
+class const MfmPlain({required final String text}) extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -236,12 +200,11 @@ class MfmPlain extends MfmInline {
 ///
 /// `$[position.x=3 something]` will be
 /// `MfmFn(name: position, arg: {"x": "3"}, children: MfmText(something))`
-class MfmFn extends MfmInline {
-  final String name;
-  final Map<String, String> args;
-
-  const MfmFn({required this.name, required this.args, super.children});
-
+class const MfmFn({
+  required final String name,
+  required final Map<String, String> args,
+  super.children,
+}) extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -262,11 +225,7 @@ class MfmFn extends MfmInline {
 }
 
 /// Inline Code Node
-class MfmInlineCode extends MfmInline {
-  final String code;
-
-  const MfmInlineCode({required this.code});
-
+class const MfmInlineCode({required final String code}) extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -279,11 +238,7 @@ class MfmInlineCode extends MfmInline {
   int get hashCode => Object.hash(runtimeType, code);
 }
 
-class MfmMathInline extends MfmInline {
-  final String formula;
-
-  const MfmMathInline({required this.formula});
-
+class const MfmMathInline({required final String formula}) extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -297,11 +252,7 @@ class MfmMathInline extends MfmInline {
 }
 
 /// Basically Text Node
-class MfmText extends MfmInline {
-  final String text;
-
-  const MfmText({required this.text});
-
+class const MfmText({required final String text}) extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -319,13 +270,11 @@ class MfmText extends MfmInline {
 /// `@ai` will be MfmMention(username: "ai", acct: "@ai")
 ///
 /// `@ai@misskey.io` will be `MfmMention(username: "ai", host: "misskey.io", acct: "@ai@misskey.io")`
-class MfmMention extends MfmInline {
-  final String username;
-  final String? host;
-  final String acct;
-
-  const MfmMention({required this.username, this.host, required this.acct});
-
+class const MfmMention({
+  required final String username,
+  final String? host,
+  required final String acct,
+}) extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -342,11 +291,7 @@ class MfmMention extends MfmInline {
 }
 
 /// Hashtag Node
-class MfmHashtag extends MfmInline {
-  final String hashtag;
-
-  const MfmHashtag({required this.hashtag});
-
+class const MfmHashtag({required final String hashtag}) extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -362,12 +307,11 @@ class MfmHashtag extends MfmInline {
 /// Link Node
 ///
 /// if [silent] is true, will not display url.
-class MfmLink extends MfmInline {
-  final String url;
-  final bool silent;
-
-  const MfmLink({required this.silent, required this.url, super.children});
-
+class const MfmLink({
+  required final bool silent,
+  required final String url,
+  super.children,
+}) extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -390,12 +334,8 @@ class MfmLink extends MfmInline {
 /// URL Node
 ///
 /// if brackets is true, will display "<https://...>"
-class MfmUrl extends MfmInline {
-  final String url;
-  final bool? brackets;
-
-  const MfmUrl({required this.url, this.brackets});
-
+class const MfmUrl({required final String url, final bool? brackets})
+    extends MfmInline {
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||

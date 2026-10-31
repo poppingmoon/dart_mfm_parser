@@ -112,7 +112,7 @@ Parser<dynamic> nest(Parser<dynamic> parser, {Parser<dynamic>? fallback}) {
 
 final language = Language();
 
-class Language {
+class Language({bool trace = false}) {
   late final Map<String, Parser<dynamic>> _l;
   Parser<List<dynamic>> get fullParser => _l["full"]!.many(0);
   Parser<List<dynamic>> get simpleParser => _l["simple"]!.many(0);
@@ -145,7 +145,7 @@ class Language {
   Parser<dynamic> get unicodeEmoji => _l["unicodeEmoji"]!;
   Parser<dynamic> get search => _l["search"]!;
 
-  Language({bool trace = false}) {
+  this {
     _l = createLanguage({
       "full": () => alt([
         unicodeEmoji,
@@ -369,9 +369,8 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmBold(
-            children: mergeText(
-              (result as List<dynamic>)[1] as List<dynamic>,
-            ).cast<MfmInline>(),
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
+                .cast<MfmInline>(),
           );
         });
       },
@@ -386,9 +385,8 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmBold(
-            children: mergeText(
-              (result as List<dynamic>)[1] as List<dynamic>,
-            ).cast<MfmInline>(),
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
+                .cast<MfmInline>(),
           );
         });
       },
@@ -414,9 +412,8 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmSmall(
-            children: mergeText(
-              (result as List<dynamic>)[1] as List<dynamic>,
-            ).cast<MfmInline>(),
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
+                .cast<MfmInline>(),
           );
         });
       },
@@ -430,9 +427,8 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmItalic(
-            children: mergeText(
-              (result as List<dynamic>)[1] as List<dynamic>,
-            ).cast<MfmInline>(),
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
+                .cast<MfmInline>(),
           );
         });
       },
@@ -498,9 +494,8 @@ class Language {
             return result;
           }
           return MfmStrike(
-            children: mergeText(
-              (result as List<dynamic>)[1] as List<dynamic>,
-            ).cast<MfmInline>(),
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
+                .cast<MfmInline>(),
           );
         });
       },
@@ -516,9 +511,8 @@ class Language {
         ]).map((result) {
           if (result is String) return result;
           return MfmStrike(
-            children: mergeText(
-              (result as List<dynamic>)[1] as List<dynamic>,
-            ).cast<MfmInline>(),
+            children: mergeText((result as List<dynamic>)[1] as List<dynamic>)
+                .cast<MfmInline>(),
           );
         });
       },
@@ -562,9 +556,8 @@ class Language {
       "fn": () {
         final fnName = Parser(
           handler: (input, index, state) {
-            final result = regexp(
-              RegExp("[a-zA-Z0-9_]+"),
-            ).handler(input, index, state);
+            final result = regexp(RegExp("[a-zA-Z0-9_]+"))
+                .handler(input, index, state);
             if (result is! Success<String>) {
               return result;
             }

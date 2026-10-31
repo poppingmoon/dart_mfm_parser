@@ -3,47 +3,32 @@ import 'dart:math';
 import 'package:mfm_parser/src/internal/utils.dart';
 import 'package:mfm_parser/src/mfm_parser.dart';
 
-class Success<T> implements Result<T> {
-  const Success({required this.value, required this.index});
+class const Success<T>({required final T value, required final int index})
+    implements Result<T>;
 
-  final T value;
-  final int index;
-}
+class const Failure<T>() implements Result<T>;
 
-class Failure<T> implements Result<T> {
-  const Failure();
-}
+sealed class Result<T>;
 
-sealed class Result<T> {}
+class const Span(final int start, final int end);
 
-class Span {
-  const Span(this.start, this.end);
+class const ManyThenItems<T, U>(final List<T> items, final U afterValue);
 
-  final int start;
-  final int end;
-}
-
-class ManyThenItems<T, U> {
-  const ManyThenItems(this.items, this.afterValue);
-
-  final List<T> items;
-  final U afterValue;
-}
-
-typedef ParserHandler<T> =
-    Result<T> Function(String input, int index, FullParserOpts state);
+typedef ParserHandler<T> = Result<T> Function(
+  String input,
+  int index,
+  FullParserOpts state,
+);
 
 Success<T> success<T>(int index, T value) =>
     Success<T>(value: value, index: index);
 Failure<T> failure<T>() => const Failure<Never>();
 
-class Parser<T> {
-  Parser({required this.handler, this.name, this.firstChars});
-
-  String? name;
-  late ParserHandler<T> handler;
-  String? firstChars;
-
+class Parser<T>({
+  required var ParserHandler<T> handler,
+  final String? name,
+  var String? firstChars,
+}) {
   Parser<U> map<U>(U Function(T value) fn) {
     return Parser<U>(
       handler: (input, index, state) {
