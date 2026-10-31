@@ -141,8 +141,7 @@ class MfmEmojiCode extends MfmInline {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(children));
+  int get hashCode => Object.hash(runtimeType, name);
 }
 
 /// Bold Element Node
@@ -375,11 +374,17 @@ class MfmLink extends MfmInline {
         (other.runtimeType == runtimeType &&
             other is MfmLink &&
             (identical(other.url, url) || other.url == url) &&
-            (identical(other.silent, silent) || other.silent == silent));
+            (identical(other.silent, silent) || other.silent == silent) &&
+            const DeepCollectionEquality().equals(other.children, children));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, url, silent);
+  int get hashCode => Object.hash(
+    runtimeType,
+    url,
+    silent,
+    const DeepCollectionEquality().hash(children),
+  );
 }
 
 /// URL Node
