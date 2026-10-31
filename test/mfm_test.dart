@@ -216,32 +216,32 @@ hoge""";
         test("Search", () {
           const input = "MFM 書き方 123 Search";
           const output = [MfmSearch(query: "MFM 書き方 123", content: input)];
-          expect(parse(input), output);
+          expect(parse(input), orderedEquals(output));
         });
         test("[Search]", () {
           const input = "MFM 書き方 123 [Search]";
           const output = [MfmSearch(query: "MFM 書き方 123", content: input)];
-          expect(parse(input), output);
+          expect(parse(input), orderedEquals(output));
         });
         test("search", () {
           const input = "MFM 書き方 123 search";
           const output = [MfmSearch(query: "MFM 書き方 123", content: input)];
-          expect(parse(input), output);
+          expect(parse(input), orderedEquals(output));
         });
         test("[search]", () {
           const input = "MFM 書き方 123 [search]";
           const output = [MfmSearch(query: "MFM 書き方 123", content: input)];
-          expect(parse(input), output);
+          expect(parse(input), orderedEquals(output));
         });
         test("検索", () {
           const input = "MFM 書き方 123 検索";
           const output = [MfmSearch(query: "MFM 書き方 123", content: input)];
-          expect(parse(input), output);
+          expect(parse(input), orderedEquals(output));
         });
         test("[検索]", () {
           const input = "MFM 書き方 123 [検索]";
           const output = [MfmSearch(query: "MFM 書き方 123", content: input)];
-          expect(parse(input), output);
+          expect(parse(input), orderedEquals(output));
         });
       });
 
@@ -417,7 +417,7 @@ hoge""";
       test("basic", () {
         const input = "今起きた😇";
         const output = [MfmText(text: "今起きた"), MfmUnicodeEmoji(emoji: "😇")];
-        expect(parse(input), output);
+        expect(parse(input), orderedEquals(output));
       });
 
       test("keycap number sign", () {
@@ -427,7 +427,7 @@ hoge""";
           MfmUnicodeEmoji(emoji: "#️⃣"),
           MfmText(text: "123"),
         ];
-        expect(parse(input), output);
+        expect(parse(input), orderedEquals(output));
       });
 
       test("Unicode 15.0", () {
@@ -445,7 +445,7 @@ hoge""";
           MfmUnicodeEmoji(emoji: "🪯"),
           MfmUnicodeEmoji(emoji: "🛜"),
         ];
-        expect(parse(input), output);
+        expect(parse(input), orderedEquals(output));
       });
 
       test("parse all BMP emojis", () {
@@ -777,22 +777,19 @@ hoge""";
         expect(parse(input), orderedEquals(output));
       });
 
-      test(
-        "ignore a italic syntax if the before char is either a space nor an LF nor [^a-z0-9]i",
-        () {
-          const input = "before*abc*after";
-          const output = [MfmText(text: "before*abc*after")];
-          expect(parse(input), orderedEquals(output));
+      test("ignore a italic syntax if the before char is either a space nor an LF nor [^a-z0-9]i", () {
+        const input = "before*abc*after";
+        const output = [MfmText(text: "before*abc*after")];
+        expect(parse(input), orderedEquals(output));
 
-          const input2 = "あいう*abc*えお";
-          const output2 = [
-            MfmText(text: "あいう"),
-            MfmItalic(children: [MfmText(text: "abc")]),
-            MfmText(text: "えお"),
-          ];
-          expect(parse(input2), orderedEquals(output2));
-        },
-      );
+        const input2 = "あいう*abc*えお";
+        const output2 = [
+          MfmText(text: "あいう"),
+          MfmItalic(children: [MfmText(text: "abc")]),
+          MfmText(text: "えお"),
+        ];
+        expect(parse(input2), orderedEquals(output2));
+      });
     });
 
     group("italic alt 2", () {
@@ -824,22 +821,19 @@ hoge""";
         expect(parse(input), orderedEquals(output));
       });
 
-      test(
-        "ignore a italic syntax if the before char is either a space nor an LF nor [^a-z0-9]i",
-        () {
-          const input = "before_abc_after";
-          const output = [MfmText(text: "before_abc_after")];
-          expect(parse(input), orderedEquals(output));
+      test("ignore a italic syntax if the before char is either a space nor an LF nor [^a-z0-9]i", () {
+        const input = "before_abc_after";
+        const output = [MfmText(text: "before_abc_after")];
+        expect(parse(input), orderedEquals(output));
 
-          const input2 = "あいう_abc_えお";
-          const output2 = [
-            MfmText(text: "あいう"),
-            MfmItalic(children: [MfmText(text: "abc")]),
-            MfmText(text: "えお"),
-          ];
-          expect(parse(input2), orderedEquals(output2));
-        },
-      );
+        const input2 = "あいう_abc_えお";
+        const output2 = [
+          MfmText(text: "あいう"),
+          MfmItalic(children: [MfmText(text: "abc")]),
+          MfmText(text: "えお"),
+        ];
+        expect(parse(input2), orderedEquals(output2));
+      });
     });
 
     group("strike tag", () {
@@ -884,19 +878,19 @@ hoge""";
       test("basic", () {
         const input = '`var x = "Strawberry Crisis";`';
         const output = [MfmInlineCode(code: 'var x = "Strawberry Crisis";')];
-        expect(parse(input), output);
+        expect(parse(input), orderedEquals(output));
       });
 
       test("disallow line break", () {
         const input = "`foo\nbar`";
         const output = [MfmText(text: "`foo\nbar`")];
-        expect(parse(input), output);
+        expect(parse(input), orderedEquals(output));
       });
 
       test("disallow ´", () {
         const input = "`foo´bar`";
         const output = [MfmText(text: "`foo´bar`")];
-        expect(parse(input), output);
+        expect(parse(input), orderedEquals(output));
       });
     });
 
@@ -906,7 +900,7 @@ hoge""";
         const output = [
           MfmMathInline(formula: 'x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}'),
         ];
-        expect(parse(input), output);
+        expect(parse(input), orderedEquals(output));
       });
 
       test("with unclosed tag in previous line", () {
@@ -1156,18 +1150,15 @@ hoge""";
         expect(parse(input), orderedEquals(output));
       });
 
-      test(
-        "ignore a hashtag if the before char is neither a space nor an LF nor [^a-z0-9]i",
-        () {
-          const input = "abc#abc";
-          const output = [MfmText(text: "abc#abc")];
-          expect(parse(input), orderedEquals(output));
+      test("ignore a hashtag if the before char is neither a space nor an LF nor [^a-z0-9]i", () {
+        const input = "abc#abc";
+        const output = [MfmText(text: "abc#abc")];
+        expect(parse(input), orderedEquals(output));
 
-          const input2 = "あいう#abc";
-          const output2 = [MfmText(text: "あいう"), MfmHashtag(hashtag: "abc")];
-          expect(parse(input2), orderedEquals(output2));
-        },
-      );
+        const input2 = "あいう#abc";
+        const output2 = [MfmText(text: "あいう"), MfmHashtag(hashtag: "abc")];
+        expect(parse(input2), orderedEquals(output2));
+      });
 
       test("ignore comma and period", () {
         const input = "Foo #bar, baz #piyo.";
@@ -1412,8 +1403,7 @@ hoge""";
             "https://たまにポプカルやシャマレと一緒にいることもあるどうか忘れないでほしいスズランは我らの光であり.example.com";
         const output = [
           MfmText(
-            text:
-                "https://たまにポプカルやシャマレと一緒にいることもあるどうか忘れないでほしいスズランは我らの光であり.example.com",
+            text: "https://たまにポプカルやシャマレと一緒にいることもあるどうか忘れないでほしいスズランは我らの光であり.example.com",
           ),
         ];
         expect(parse(input), orderedEquals(output));
@@ -2023,7 +2013,7 @@ hoge""";
           const output = [
             MfmBold(children: [MfmHashtag(hashtag: "abc(xyz)")]),
           ];
-          expect(parse(input, nestLimit: 2), output);
+          expect(parse(input, nestLimit: 2), orderedEquals(output));
 
           const input2 = "<b>#abc(x(y)z)</b>";
           const output2 = [
@@ -2034,7 +2024,7 @@ hoge""";
               ],
             ),
           ];
-          expect(parse(input2, nestLimit: 2), output2);
+          expect(parse(input2, nestLimit: 2), orderedEquals(output2));
         });
 
         test("outside ()", () {
@@ -2098,7 +2088,7 @@ hoge""";
             ],
           ),
         ];
-        expect(parse(input2, nestLimit: 2), output2);
+        expect(parse(input2, nestLimit: 2), orderedEquals(output2));
       });
 
       test("fn", () {
@@ -2110,7 +2100,7 @@ hoge""";
             ],
           ),
         ];
-        expect(parse(input, nestLimit: 2), output);
+        expect(parse(input, nestLimit: 2), orderedEquals(output));
       });
     });
 
