@@ -333,44 +333,34 @@ bool isPlainChar(int code) {
 
 List<MfmNode> mergeText(List<dynamic> nodes) {
   final List<MfmNode> dest = <MfmNode>[];
-  final List<String> storedChars = <String>[];
+  final List<String> stored = <String>[];
 
-  void generateText() {
-    if (storedChars.isNotEmpty) {
-      dest.add(MfmText(text: storedChars.join()));
-      storedChars.clear();
+  void add(dynamic node) {
+    if (node is String) {
+      stored.add(node);
+    } else if (node is MfmText) {
+      stored.add(node.text);
+    } else if (node is MfmNode) {
+      if (stored.isNotEmpty) {
+        dest.add(MfmText(text: stored.join()));
+        stored.clear();
+      }
+      dest.add(node);
     }
   }
 
   for (final node in nodes) {
-    if (node is String) {
-      storedChars.add(node);
-    } else if (node is MfmText) {
-      storedChars.add(node.text);
-    } else {
-      generateText();
-      if (node is List) {
-        var str = "";
-        for (final nodeElement in node) {
-          if (nodeElement is String) {
-            str += nodeElement;
-          } else if (nodeElement is MfmNode) {
-            if (str.isNotEmpty) {
-              dest.add(MfmText(text: str));
-            }
-            str = "";
-            dest.add(nodeElement);
-          }
-        }
-        if (str != "") {
-          dest.add(MfmText(text: str));
-        }
-      } else if (node is MfmNode) {
-        dest.add(node);
+    if (node is List) {
+      for (final child in node) {
+        add(child);
       }
+    } else {
+      add(node);
     }
   }
-  generateText();
+  if (stored.isNotEmpty) {
+    dest.add(MfmText(text: stored.join()));
+  }
 
   return dest;
 }

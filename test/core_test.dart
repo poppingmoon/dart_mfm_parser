@@ -266,4 +266,41 @@ void main() {
       );
     });
   });
+
+  group("mergeText", () {
+    test("merges adjacent strings and text nodes into one text node", () {
+      final nodes = [
+        "a",
+        const MfmText(text: "b"),
+        ["c", const MfmText(text: "d")],
+        const MfmBold(children: [MfmText(text: "e")]),
+        const MfmText(text: "f"),
+        "g",
+      ];
+      expect(
+        mergeText(nodes),
+        orderedEquals([
+          const MfmText(text: "abcd"),
+          const MfmBold(children: [MfmText(text: "e")]),
+          const MfmText(text: "fg"),
+        ]),
+      );
+    });
+
+    test("makes no text node when there is no text", () {
+      expect(mergeText([]), isEmpty);
+      expect(
+        mergeText([
+          const MfmBold(children: [MfmText(text: "a")]),
+          [
+            const MfmItalic(children: [MfmText(text: "b")]),
+          ],
+        ]),
+        orderedEquals([
+          const MfmBold(children: [MfmText(text: "a")]),
+          const MfmItalic(children: [MfmText(text: "b")]),
+        ]),
+      );
+    });
+  });
 }
