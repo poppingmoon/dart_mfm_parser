@@ -99,9 +99,24 @@ class Parser<T>({
 }
 
 Parser<String> str(String value) {
+  assert(value.isNotEmpty);
+  final firstCode = value.codeUnitAt(0);
+  if (value.length == 1) {
+    return Parser(
+      handler: (input, index, _) {
+        if (index >= input.length || input.codeUnitAt(index) != firstCode) {
+          return failure();
+        }
+
+        return success(index + 1, value);
+      },
+    );
+  }
   return Parser(
     handler: (input, index, _) {
-      if (!input.startsWith(value, index)) {
+      if (index >= input.length ||
+          input.codeUnitAt(index) != firstCode ||
+          !input.startsWith(value, index)) {
         return failure();
       }
 
