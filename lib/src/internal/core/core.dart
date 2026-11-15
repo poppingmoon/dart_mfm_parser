@@ -94,7 +94,15 @@ class Parser<T>({
   }
 
   Parser<T?> option() {
-    return alt([this, succeeded(null)]);
+    return Parser(
+      handler: (input, index, state) {
+        final result = handler(input, index, state);
+        return switch (result) {
+          Success() => result,
+          Failure() => success(index, null),
+        };
+      },
+    );
   }
 }
 
@@ -231,14 +239,6 @@ Parser<T> first<T>(String chars, Parser<T> parser) {
   );
   guarded.firstChars = chars;
   return guarded;
-}
-
-Parser<T> succeeded<T>(T value) {
-  return Parser(
-    handler: (_, index, _) {
-      return success(index, value);
-    },
-  );
 }
 
 Parser<void> notMatch(Parser<dynamic> parser) {
