@@ -27,7 +27,8 @@ Failure<T> failure<T>() => const Failure<Never>();
 class Parser<T>({
   required var ParserHandler<T> handler,
   final String? name,
-  var String? firstChars,
+  final String? firstChars,
+  final Parser<T>? guarded,
 }) {
   Parser<U> map<U>(U Function(T value) fn) {
     return Parser<U>(
@@ -196,34 +197,41 @@ Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
 }
 
 Parser<T> alt<T>(List<Parser<T>> parsers) {
-  final candidatesByChar = parsers.any((parser) => parser.firstChars != null)
-      ? <int, List<Parser<T>>>{}
-      : null;
+  if (parsers.every((parser) => parser.firstChars == null)) {
+    return Parser(
+      handler: (input, index, state) {
+        for (final parser in parsers) {
+          final result = parser.handler(input, index, state);
+          if (result is Success) {
+            return result;
+          }
+        }
+        return failure();
+      },
+    );
+  }
+
+  final candidatesByChar = List<List<Parser<T>>?>.filled(0x81, null);
   return Parser(
     handler: (input, index, state) {
-      var candidates = parsers;
-      if (candidatesByChar != null) {
-        final code = index < input.length
-            ? min(input.codeUnitAt(index), 0x80)
-            : -1;
-        candidates = candidatesByChar.putIfAbsent(
-          code,
-          () => parsers
-              .where(
-                (parser) => switch (parser.firstChars) {
-                  final firstChars?
-                      when code >= 0 &&
-                          firstChars.contains(String.fromCharCode(code)) =>
-                    true,
-                  null => true,
-                  _ => false,
-                },
-              )
-              .toList(),
-        );
-      }
-      for (final candidate in candidates) {
-        final result = candidate.handler(input, index, state);
+      final code = index < input.length
+          ? min(input.codeUnitAt(index), 0x80)
+          : 0x80;
+      final candidates = candidatesByChar[code] ??= parsers
+          .where(
+            (parser) => switch (parser.firstChars) {
+              final firstChars?
+                  when code < 0x80 &&
+                      firstChars.contains(String.fromCharCode(code)) =>
+                true,
+              null => true,
+              _ => false,
+            },
+          )
+          .map((parser) => parser.guarded ?? parser)
+          .toList();
+      for (final parser in candidates) {
+        final result = parser.handler(input, index, state);
         if (result is Success) {
           return result;
         }
@@ -234,16 +242,16 @@ Parser<T> alt<T>(List<Parser<T>> parsers) {
 }
 
 Parser<T> first<T>(String chars, Parser<T> parser) {
-  final guarded = Parser<T>(
+  return Parser(
     handler: (input, index, state) {
       if (index >= input.length || !chars.contains(input[index])) {
         return failure();
       }
       return parser.handler(input, index, state);
     },
+    firstChars: chars,
+    guarded: parser,
   );
-  guarded.firstChars = chars;
-  return guarded;
 }
 
 Parser<void> notMatch(Parser<dynamic> parser) {
