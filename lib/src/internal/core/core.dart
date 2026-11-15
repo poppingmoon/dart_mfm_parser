@@ -119,6 +119,7 @@ Parser<String> str(String value) {
 
         return success(index + 1, value);
       },
+      firstChars: firstCode < 0x80 ? value[0] : null,
     );
   }
   return Parser(
@@ -131,6 +132,7 @@ Parser<String> str(String value) {
 
       return success(index + value.length, value);
     },
+    firstChars: firstCode < 0x80 ? value[0] : null,
   );
 }
 
@@ -169,6 +171,7 @@ Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
         }
         return success(latestIndex, selected);
       },
+      firstChars: parsers[0].firstChars,
     );
   } else {
     return Parser(
@@ -192,6 +195,7 @@ Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
         }
         return success(latestIndex, accum);
       },
+      firstChars: parsers[0].firstChars,
     );
   }
 }
@@ -238,6 +242,9 @@ Parser<T> alt<T>(List<Parser<T>> parsers) {
       }
       return failure();
     },
+    firstChars: parsers.every((parser) => parser.firstChars != null)
+        ? parsers.map((parser) => parser.firstChars).join()
+        : null,
   );
 }
 

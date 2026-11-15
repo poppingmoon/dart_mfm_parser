@@ -38,6 +38,7 @@ final newLine = Parser<String>(
     }
     return failure();
   },
+  firstChars: '\r\n',
 );
 
 Parser<dynamic> seqOrText(List<Parser<dynamic>> parsers) {
