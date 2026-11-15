@@ -147,6 +147,7 @@ Parser<String> regexp<T extends RegExp>(T pattern) {
 }
 
 Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
+  assert(parsers.isNotEmpty);
   if (select != null) {
     return Parser(
       handler: (input, index, state) {
@@ -162,7 +163,7 @@ Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
                 selected = value;
               }
             case Failure():
-              return failure();
+              return result;
           }
         }
         return success(latestIndex, selected);
@@ -171,17 +172,21 @@ Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
   } else {
     return Parser(
       handler: (input, index, state) {
-        var latestIndex = index;
-        final accum = <dynamic>[];
+        final result = parsers[0].handler(input, index, state);
+        if (result is! Success) {
+          return result;
+        }
+        var latestIndex = result.index;
+        final accum = [result.value];
 
-        for (var i = 0; i < parsers.length; i++) {
+        for (var i = 1; i < parsers.length; i++) {
           final result = parsers[i].handler(input, latestIndex, state);
           switch (result) {
             case Success(:final value, :final index):
               latestIndex = index;
               accum.add(value);
             case Failure():
-              return failure();
+              return result;
           }
         }
         return success(latestIndex, accum);
