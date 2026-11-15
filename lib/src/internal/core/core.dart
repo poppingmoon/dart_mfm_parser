@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:mfm_parser/src/internal/utils.dart';
 import 'package:mfm_parser/src/mfm_parser.dart';
@@ -279,6 +280,16 @@ int stateKey(FullParserOpts state) {
 }
 
 Parser<String> until(Parser<dynamic> terminator, int min) {
+  final (canStart, skipNonAscii) = switch (terminator.firstChars) {
+    final firstChars? => (
+      firstChars.codeUnits.fold(Uint8List(16), (acc, code) {
+        acc[code ~/ 8] |= 1 << code % 8;
+        return acc;
+      }),
+      true,
+    ),
+    _ => (Uint8List.fromList(List.filled(16, 0xFF)), false),
+  };
   final parserKey = Object();
   return Parser(
     handler: (input, index, state) {
@@ -289,10 +300,18 @@ Parser<String> until(Parser<dynamic> terminator, int min) {
       if (span != null && span.start <= index && index <= span.end) {
         end = span.end;
       } else {
-        end = index;
-        while (end < input.length &&
-            terminator.handler(input, end, state) is Failure) {
-          end++;
+        for (end = index; end < input.length; end++) {
+          final code = input.codeUnitAt(end);
+          if (code < 0x80) {
+            if (canStart[code ~/ 8] & (1 << code % 8) == 0) {
+              continue;
+            }
+          } else if (skipNonAscii) {
+            continue;
+          }
+          if (terminator.handler(input, end, state) is Success) {
+            break;
+          }
         }
         spans[input] = Span(index, end);
       }
