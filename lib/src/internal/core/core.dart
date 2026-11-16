@@ -28,8 +28,8 @@ Failure<T> failure<T>() => const Failure<Never>();
 class Parser<T>({
   required var ParserHandler<T> handler,
   final String? name,
-  final String? firstChars,
-  final String? optionalFirstChars,
+  final Set<int>? firstChars,
+  final Set<int>? optionalFirstChars,
   final Parser<T>? guarded,
 }) {
   Parser<U> map<U>(U Function(T value) fn) {
@@ -122,7 +122,7 @@ Parser<String> str(String value) {
 
         return success(index + 1, value);
       },
-      firstChars: firstCode < 0x80 ? value[0] : null,
+      firstChars: firstCode < 0x80 ? {firstCode} : null,
     );
   }
   return Parser(
@@ -135,7 +135,7 @@ Parser<String> str(String value) {
 
       return success(index + value.length, value);
     },
-    firstChars: firstCode < 0x80 ? value[0] : null,
+    firstChars: firstCode < 0x80 ? {firstCode} : null,
   );
 }
 
@@ -154,18 +154,13 @@ Parser<String> regexp<T extends RegExp>(T pattern) {
 
 // a seq can start where its first non-zero-width parser can, or where one of
 // the zero-width parsers before it consumes; any unknown set disables the claim
-String? seqFirstChars(List<Parser<dynamic>> parsers) {
-  final buffer = StringBuffer();
+Set<int>? seqFirstChars(List<Parser<dynamic>> parsers) {
+  final chars = <int>{};
   for (final parser in parsers) {
     if (parser.optionalFirstChars case final firstChars?) {
-      buffer.write(firstChars);
+      chars.addAll(firstChars);
     } else if (parser.firstChars case final firstChars?) {
-      if (buffer.isEmpty) {
-        return firstChars;
-      } else {
-        buffer.write(firstChars);
-        return buffer.toString();
-      }
+      return chars.union(firstChars);
     } else {
       return null;
     }
@@ -248,9 +243,7 @@ Parser<T> alt<T>(List<Parser<T>> parsers) {
       final candidates = candidatesByChar[code] ??= parsers
           .where(
             (parser) => switch (parser.firstChars) {
-              final firstChars?
-                  when code < 0x80 &&
-                      firstChars.contains(String.fromCharCode(code)) =>
+              final firstChars? when code < 0x80 && firstChars.contains(code) =>
                 true,
               null => true,
               _ => false,
@@ -267,7 +260,7 @@ Parser<T> alt<T>(List<Parser<T>> parsers) {
       return failure();
     },
     firstChars: parsers.every((parser) => parser.firstChars != null)
-        ? parsers.map((parser) => parser.firstChars).join()
+        ? {for (final parser in parsers) ...?parser.firstChars}
         : null,
     optionalFirstChars:
         parsers.any((parser) => parser.optionalFirstChars != null)
@@ -275,7 +268,7 @@ Parser<T> alt<T>(List<Parser<T>> parsers) {
             (parser) => parser.optionalFirstChars ?? parser.firstChars,
           )) {
             final firstChars when firstChars.every((chars) => chars != null) =>
-              firstChars.join(),
+              {for (final chars in firstChars) ...?chars},
             _ => null,
           }
         : null,
@@ -291,7 +284,7 @@ Parser<T> first<T>(String chars, Parser<T> parser) {
       }
       return parser.handler(input, index, state);
     },
-    firstChars: chars,
+    firstChars: chars.codeUnits.toSet(),
     guarded: parser,
   );
 }
@@ -316,7 +309,7 @@ int stateKey(FullParserOpts state) {
 Parser<String> until(Parser<dynamic> terminator, int min) {
   final (canStart, skipNonAscii) = switch (terminator.firstChars) {
     final firstChars? => (
-      firstChars.codeUnits.fold(Uint8List(16), (acc, code) {
+      firstChars.fold(Uint8List(16), (acc, code) {
         acc[code ~/ 8] |= 1 << code % 8;
         return acc;
       }),
