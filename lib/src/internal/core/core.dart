@@ -29,6 +29,7 @@ class Parser<T>({
   required var ParserHandler<T> handler,
   final String? name,
   final String? firstChars,
+  final String? optionalFirstChars,
   final Parser<T>? guarded,
 }) {
   Parser<U> map<U>(U Function(T value) fn) {
@@ -104,6 +105,7 @@ class Parser<T>({
           Failure() => success(index, null),
         };
       },
+      optionalFirstChars: firstChars,
     );
   }
 }
@@ -150,6 +152,27 @@ Parser<String> regexp<T extends RegExp>(T pattern) {
   );
 }
 
+// a seq can start where its first non-zero-width parser can, or where one of
+// the zero-width parsers before it consumes; any unknown set disables the claim
+String? seqFirstChars(List<Parser<dynamic>> parsers) {
+  final buffer = StringBuffer();
+  for (final parser in parsers) {
+    if (parser.optionalFirstChars case final firstChars?) {
+      buffer.write(firstChars);
+    } else if (parser.firstChars case final firstChars?) {
+      if (buffer.isEmpty) {
+        return firstChars;
+      } else {
+        buffer.write(firstChars);
+        return buffer.toString();
+      }
+    } else {
+      return null;
+    }
+  }
+  return null;
+}
+
 Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
   assert(parsers.isNotEmpty);
   if (select != null) {
@@ -172,7 +195,7 @@ Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
         }
         return success(latestIndex, selected);
       },
-      firstChars: parsers[0].firstChars,
+      firstChars: seqFirstChars(parsers),
     );
   } else {
     return Parser(
@@ -196,7 +219,7 @@ Parser<dynamic> seq(List<Parser<dynamic>> parsers, {int? select}) {
         }
         return success(latestIndex, accum);
       },
-      firstChars: parsers[0].firstChars,
+      firstChars: seqFirstChars(parsers),
     );
   }
 }
@@ -217,7 +240,7 @@ Parser<T> alt<T>(List<Parser<T>> parsers) {
   }
 
   final candidatesByChar = List<List<Parser<T>>?>.filled(0x81, null);
-  return Parser(
+  final parser = Parser<T>(
     handler: (input, index, state) {
       final code = index < input.length
           ? min(input.codeUnitAt(index), 0x80)
@@ -246,7 +269,18 @@ Parser<T> alt<T>(List<Parser<T>> parsers) {
     firstChars: parsers.every((parser) => parser.firstChars != null)
         ? parsers.map((parser) => parser.firstChars).join()
         : null,
+    optionalFirstChars:
+        parsers.any((parser) => parser.optionalFirstChars != null)
+        ? switch (parsers.map(
+            (parser) => parser.optionalFirstChars ?? parser.firstChars,
+          )) {
+            final firstChars when firstChars.every((chars) => chars != null) =>
+              firstChars.join(),
+            _ => null,
+          }
+        : null,
   );
+  return parser;
 }
 
 Parser<T> first<T>(String chars, Parser<T> parser) {
