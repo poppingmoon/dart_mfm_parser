@@ -303,4 +303,37 @@ void main() {
       );
     });
   });
+
+  group("first chars", () {
+    test("str, seq and alt declare the ascii chars they can start with", () {
+      expect(str("ab").firstChars, unorderedEquals("a".codeUnits));
+      expect(str("あ").firstChars, isNull);
+      expect(seq([str("a"), char]).firstChars, unorderedEquals("a".codeUnits));
+      expect(seq([char, str("a")]).firstChars, isNull);
+      expect(
+        alt([str("a"), newLine]).firstChars,
+        unorderedEquals("a\r\n".codeUnits),
+      );
+      expect(alt([str("a"), char]).firstChars, isNull);
+      expect(str("a").option().firstChars, isNull);
+    });
+
+    test("until stops only where the terminator matches", () {
+      final state = createState();
+      final result1 = until(
+        seq([str("b"), str("c")]),
+        1,
+      ).handler("abあbc", 0, state);
+      expect(result1, isA<Success<String>>());
+      expect((result1 as Success<String>).index, 3);
+      expect(result1.value, "abあ");
+      final result2 = until(
+        alt([str("あ"), str("c")]),
+        1,
+      ).handler("abあbc", 0, state);
+      expect(result2, isA<Success<String>>());
+      expect((result2 as Success<String>).index, 2);
+      expect(result2.value, "ab");
+    });
+  });
 }
